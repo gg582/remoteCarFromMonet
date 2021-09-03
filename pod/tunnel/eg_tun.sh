@@ -21,29 +21,27 @@ echo ""
 
 while true
 do
-	echo "Waiting command..."
-
 	CMD=`./catd`
 	
 	case ${CMD} in
 	"STOP")
-		echo "CMD: stop"
+		echo "EGRESS: stop"
 		${SEND} ${TARGET} ${PORT} < ${STOP}
 		;;
 	"LEFT")
-		echo "CMD: left"
+		echo "EGRESS: left"
 		${SEND} ${TARGET} ${PORT} < ${LEFT}
 		;;
 	"RGHT")
-		echo "CMD: right"
+		echo "EGRESS: right"
 		${SEND} ${TARGET} ${PORT} < ${RGHT}
 		;;
 	"FWRD")
-		echo "CMD: forward"
+		echo "EGRESS: forward"
 		${SEND} ${TARGET} ${PORT} < ${FWRD}
 		;;
 	"BWRD")
-		echo "CMD: backward"
+		echo "EGRESS: backward"
 		${SEND} ${TARGET} ${PORT} < ${BWRD}
 		;;
 	"TERM")
@@ -51,8 +49,10 @@ do
 		break
 		;;
 	*)
-		echo "CMD: invalid"
+		echo "Invalid command"
 	esac
 done
 
-echo "Good bye"
+echo "EGRESS is terminated. Good bye"
+echo "Good bye!!!"
+

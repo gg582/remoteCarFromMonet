@@ -18,5 +18,5 @@ while true
 do
 	DIST=$(ncat -lp ${PORT})
 	echo ${DIST} > ${SONIC}
-	echo "RECV: ${DIST}"
+	echo "INGRESS: ${DIST}"
 done
