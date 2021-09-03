@@ -1,4 +1,5 @@
 #!/bin/bash
 
-./exit_tun.sh 192.168.0.73 10101
+bg ./eg_tun.sh 192.168.0.73 10101 
+bg ./in_tun.sh 10102
 

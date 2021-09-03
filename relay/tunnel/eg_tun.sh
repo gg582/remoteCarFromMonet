@@ -25,12 +25,9 @@ do
 
 	CMD=`./catd`
 	
-	echo "Waiting command... ${CMD}"
-
 	case ${CMD} in
 	"STOP")
 		echo "CMD: stop"
-		echo "${SEND} ${TARGET} ${PORT} < ${STOP}"
 		${SEND} ${TARGET} ${PORT} < ${STOP}
 		;;
 	"LEFT")
