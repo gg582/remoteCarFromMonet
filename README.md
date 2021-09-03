@@ -4,19 +4,18 @@ This provides an environment to control a car at long distance
 
 ## Project tree
 
-.
- * [relay](./relay)
-   * [driver](./relay/driver)
-     * [motor](./relay/driver/motor)
-     * [sensor-ultra-sound](./relay/driver/sensor-ultra-sound)
-   * [tunnel](./relay/tunnel)
+ * [car](./car)
+   * [common](./car/common)
+   * [controller](./car/controller)
+   * [driver](./car/driver)
+   * [sonic](./car/sonic)
  * [config](./config)
    * [k8s-deploy](./config/k8s-deploy)
- * [car](./car)
-     * [common](./car/common)
-     * [controller](./car/controller)
-     * [driver](./car/driver)
-     * [test](./car/test)
+ * [exec](./exec)
+ * [pod](./pod)
+     * [driver](./pod/driver)
+     * [tunnel](./pod/tunnel)
+
 ### config directory
 
 It is used for Pod deployment
