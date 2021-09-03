@@ -1,10 +1,7 @@
-obj-m += motor.o sr04.o
-
-CFLAGS= -I$(PWD)/../common
-
+obj-m += sr04.o
 KDIR = /lib/modules/$(shell uname -r)/build
-
 all:
-	make -C $(KDIR) M=$(shell pwd) modules
+	make -Wall -C $(KDIR) M=$(shell pwd) modules
 clean:
 	make -C $(KDIR) M=$(shell pwd) clean
+
