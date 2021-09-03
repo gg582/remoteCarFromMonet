@@ -1,0 +1,20 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#define DEVNAME "/dev/car/motor"
+#include <ioctl_car_cmd.h>
+
+int main () {
+
+	int dev ;
+
+	dev = open ( DEVNAME , O_RDWR ) ;
+
+	if ( dev < 0 ) exit (1); 
+
+	ioctl ( dev , PI_CMD_RIGHT) ;
+
+	return 0 ;
+}

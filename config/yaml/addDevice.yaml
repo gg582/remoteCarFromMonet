@@ -1,0 +1,107 @@
+# for volumeF.yaml ( prometheus ) 
+#alertmanager:
+#    persistentVolume:
+#        enabled: false
+#server:  
+#    persistentVolume:
+#        enabled: false
+#pushgateway: 
+#    persistentVolume:
+#        enabled: false
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: carpod
+spec:
+  nodeName: node1
+  containers: # create car container
+  - name: carcon
+    image: ubuntu:latest
+    securityContext:
+      privileged: true
+    command: [ "/bin/bash" , "-c" ]
+    args: [ "while true ; do sleep 300 ; done ;" ] 
+    volumeMounts:
+    - mountPath: /dev/car/sr04
+      name: us-volume
+    - mountPath: /dev/car/motor
+      name: motor-volume
+    - mountPath: /dev/car/ir0
+      name: ir0-volume
+    - mountPath: /dev/car/ir1
+      name: ir1-volume
+    - mountPath: /dev/car/ir2
+      name: ir2-volume
+    - mountPath: /dev/car/ir3
+      name: ir3-volume
+  - name: tunnel # create tunnel container
+    image: ubuntu:latest
+    securityContext:
+      privileged: true
+    command: [ "/bin/bash" , "-c" ]
+    args: [ "while true ; do sleep 300 ; done ;" ] 
+    volumeMounts: #volumemounts
+    - mountPath: /dev/car/sr04_tun
+      name: us-volume4tun
+    - mountPath: /dev/car/motor_tun
+      name: motor-volume4tun
+    - mountPath: /dev/car/ir0_tun
+      name: ir0-volume4tun
+    - mountPath: /dev/car/ir1_tun
+      name: ir1-volume4tun
+    - mountPath: /dev/car/ir2_tun
+      name: ir2-volume4tun
+    - mountPath: /dev/car/ir3_tun
+      name: ir3-volume4tun
+  volumes: # volumes
+  - name: us-volume
+    hostPath:
+            #sr04 path
+      path: /dev/car/sr04
+      type: CharDevice
+  - name: motor-volume
+    hostPath:
+      path: /dev/car/motor
+      type:  CharDevice
+  - name: ir0-volume
+    hostPath:
+      path: /dev/car/ir0
+      type: CharDevice
+  - name: ir1-volume
+    hostPath:
+      path: /dev/car/ir1
+      type: CharDevice
+  - name: ir2-volume
+    hostPath:
+      path: /dev/car/ir2
+      type: CharDevice
+  - name: ir3-volume
+    hostPath:
+      path: /dev/car/ir3
+      type: CharDevice
+  - name: us-volume4tun
+    hostPath:
+            #sr04 path
+      path: /dev/car/sr04_tun
+      type: CharDevice
+  - name: motor-volume4tun
+    hostPath:
+      path: /dev/car/motor_tun
+      type:  CharDevice
+  - name: ir0-volume4tun
+    hostPath:
+      path: /dev/car/ir0_tun
+      type: CharDevice
+  - name: ir1-volume4tun
+    hostPath:
+      path: /dev/car/ir1_tun
+      type: CharDevice
+  - name: ir2-volume4tun
+    hostPath:
+      path: /dev/car/ir2_tun
+      type: CharDevice
+  - name: ir3-volume4tun
+    hostPath:
+      path: /dev/car/ir3_tun
+      type: CharDevice
