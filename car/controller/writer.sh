@@ -1,10 +1,12 @@
 #!/bin/bash
 
+source ../../conf-exec.sh
+
 while true
 do
 	echo "Waiting command ..."
 
-	cmd=`ncat -lp 10101`
+	cmd=$(ncat -lp ${DOWN_PORT})"
 
 	case $cmd in
 	"STOP")
