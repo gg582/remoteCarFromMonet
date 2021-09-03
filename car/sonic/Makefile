@@ -1,7 +1,7 @@
 
 CFLAGS = -O2 -I../common
 
-SRCS = ul-test
+SRCS = sonic.c
 
 CMDS = $(patsubst %.c, %, $(SRCS))
 

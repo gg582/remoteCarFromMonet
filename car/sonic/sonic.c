@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <stdbool.h>
+
 int main () {
 
 	int myDevice = open ( "/dev/car/sr04" , O_RDWR ) ;
@@ -13,25 +14,18 @@ int main () {
 	int i ;
 	unsigned long val = 0 ;
 	int ret;
+	char buf [255];
 
 	if ( myDevice == -1 ) {
 		perror ( "Open Funtion Failed" ) ; 
 		return -1 ;
 	}	
 
-	for ( i = 0 ; i < 10000 ; i ++ ) {
+	ret = read ( myDevice , & val , sizeof ( unsigned long ) ) ;
 
-		ret = read ( myDevice , & val , sizeof ( unsigned long ) ) ;
-
-		if ( ret ==  0 ) {
-			printf ("Error.. \n");
-			continue;
-		}
-
-		printf ( "Distance : %d cm \n" , val ) ;
-
-		usleep (100 * 1000);
-	}
+	memset  ( buf, 0x00, sizeof (buf));
+	sprintf ( buf, "%d\n", val ) ;
+	write (1, buf, strlen (buf));
 
 	close ( myDevice ) ;
 
