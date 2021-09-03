@@ -1,0 +1,8 @@
+#!/bin/bash
+
+SONIC_DRV="/dev/car/sr04"
+
+CAR_POD_ADDR="192.168.0.63"
+
+DOWN_PORT="10101"
+UP_PORT="10102"
