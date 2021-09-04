@@ -19,6 +19,7 @@ spec:
     - mountPath: /home/pi/remote-car
       name: cloudos-volume
     - mountPath: /home/pi/remote-car/conf-exec.sh
+      name: kubepodip
   volumes:
   - name: us-volume
     hostPath:
