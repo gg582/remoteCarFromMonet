@@ -23,7 +23,7 @@ BKWD=backward
 TERM=terminate
 
 echo ""
-echo "Welcome. This an exit of a tunnel for a remote car."
+echo "Welcome. This is a virtual car in a cluster node."
 echo "The remote car has an IP: ${TARGET}"
 echo ""
 
