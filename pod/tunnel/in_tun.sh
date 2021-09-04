@@ -4,7 +4,7 @@ SONIC="/dev/car/sr04_tun"
 
 if [[ $# -eq 0 ]]
 then
-	"in_tun.sh <port number>"
+	echo "in_tun.sh <port number>"
 	exit 0
 fi
 
@@ -18,6 +18,6 @@ echo ""
 while true
 do
 	DIST=$(ncat -lp ${PORT})
-	echo ${DIST} > ${SONIC}
+	echo ${DIST} | ./toss ${SONIC}
 	echo "INGRESS: ${DIST}"
 done
