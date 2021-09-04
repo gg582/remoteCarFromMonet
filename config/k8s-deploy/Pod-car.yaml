@@ -12,12 +12,12 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: carpod
+  name: podcar
 spec:
   nodeName: node1
   containers: # create car container
   - name: carcon
-    image: ubuntu:latest
+    image: ubuntu:padcar-0.9
     securityContext:
       privileged: true
     command: [ "/bin/bash" , "-c" ]
@@ -35,8 +35,10 @@ spec:
       name: ir2-volume
     - mountPath: /dev/car/ir3
       name: ir3-volume
+    - mountPath: /home/pi/remote-car
+      name: remote-car-volume
   - name: cartun # create tunnel container
-    image: ubuntu:latest
+    image: ubuntu:padcar-0.9
     securityContext:
       privileged: true
     command: [ "/bin/bash" , "-c" ]
@@ -54,10 +56,11 @@ spec:
       name: ir2-volume4tun
     - mountPath: /dev/car/ir3_tun
       name: ir3-volume4tun
+    - mountPath: /home/pi/remote-car
+      name: remote-car-volume
   volumes: # volumes
   - name: us-volume
     hostPath:
-            #sr04 path
       path: /dev/car/sr04
       type: CharDevice
   - name: motor-volume
@@ -82,7 +85,6 @@ spec:
       type: CharDevice
   - name: us-volume4tun
     hostPath:
-            #sr04 path
       path: /dev/car/sr04_tun
       type: CharDevice
   - name: motor-volume4tun
@@ -105,3 +107,7 @@ spec:
     hostPath:
       path: /dev/car/ir3_tun
       type: CharDevice
+  - name: remote-car-volume
+    hostPath:
+      path: /home/pi/remote-car
+      type: DirectoryOrCreate
