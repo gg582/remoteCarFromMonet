@@ -16,7 +16,7 @@ spec:
       name: us-volume
     - mountPath: /dev/car/motor
       name: motor-volume
-    - mountPath: /home/pi/cloudOS/remote-car
+    - mountPath: /home/pi/remote-car
       name: cloudos-volume
   volumes:
   - name: us-volume
@@ -30,5 +30,5 @@ spec:
       type:  CharDevice
   - name: cloudos-volume
     hostPath:
-      path: /home/pi/cloudOS/remote-car
+      path: /home/pi/remote-car
       type:  DirectoryOrCreate

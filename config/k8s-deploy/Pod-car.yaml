@@ -17,7 +17,7 @@ spec:
   nodeName: node1
   containers: # create car container
   - name: carcon
-    image: ubuntu:latest
+    image: ubuntu:padcar-0.9
     securityContext:
       privileged: true
     command: [ "/bin/bash" , "-c" ]
@@ -36,9 +36,9 @@ spec:
     - mountPath: /dev/car/ir3
       name: ir3-volume
     - mountPath: /home/pi/remote-car
-      name: remove-car-volume
+      name: remote-car-volume
   - name: cartun # create tunnel container
-    image: ubuntu:latest
+    image: ubuntu:padcar-0.9
     securityContext:
       privileged: true
     command: [ "/bin/bash" , "-c" ]
@@ -57,9 +57,7 @@ spec:
     - mountPath: /dev/car/ir3_tun
       name: ir3-volume4tun
     - mountPath: /home/pi/remote-car
-      name: remove-car-volume
-
-      name: ir3-volume4tun
+      name: remote-car-volume
   volumes: # volumes
   - name: us-volume
     hostPath:

@@ -6,7 +6,7 @@ while true
 do
 	echo "Waiting command ..."
 
-	cmd=$(ncat -lp ${DOWN_PORT})"
+	cmd=$(ncat -lp ${DOWN_PORT})
 
 	case $cmd in
 	"STOP")
@@ -40,3 +40,4 @@ do
 done
 
 echo "Good bye"
+
