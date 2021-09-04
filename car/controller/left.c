@@ -18,5 +18,7 @@ int main () {
 
 	ioctl ( dev , PI_CMD_LEFT) ;
 
+	close (dev);
+
 	return 0 ;
 }

@@ -19,5 +19,7 @@ int main () {
 
 	ioctl ( dev , PI_CMD_FORWARD ) ;
 
+	close (dev);
+
 	return 0 ;
 }

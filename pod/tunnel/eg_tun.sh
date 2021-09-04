@@ -11,7 +11,7 @@ STOP=stop
 LEFT=left
 RGHT=right
 FWRD=forward
-BWRD=backward
+BKWD=backward
 TERM=terminate
 
 echo ""
@@ -40,9 +40,9 @@ do
 		echo "EGRESS: forward"
 		${SEND} ${TARGET} ${PORT} < ${FWRD}
 		;;
-	"BWRD")
+	"BKWD")
 		echo "EGRESS: backward"
-		${SEND} ${TARGET} ${PORT} < ${BWRD}
+		${SEND} ${TARGET} ${PORT} < ${BKWD}
 		;;
 	"TERM")
 		${SEND} ${TARGET} ${PORT} < ${TERM}
