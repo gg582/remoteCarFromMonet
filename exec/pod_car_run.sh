@@ -1,5 +1,5 @@
 #!/bin/bash
 
-echo "Car controller begins"
+echo "Car begins in virtual an environment"
 
 (cd ../pod/tunnel/;./relay.sh)
