@@ -58,6 +58,8 @@ spec:
       name: ir3-volume4tun
     - mountPath: /home/pi/remote-car
       name: remote-car-volume
+    - mountPath: /home/pi/remote-car/conf-exec.sh
+      name: kubepodip
   volumes: # volumes
   - name: us-volume
     hostPath:
@@ -111,3 +113,6 @@ spec:
     hostPath: 
       path: /home/pi/remote-car
       type: DirectoryOrCreate
+  - name : kubepodip
+      path: /home/pi/kubePodIP/conf-exec.sh
+      type: FileOrCreate

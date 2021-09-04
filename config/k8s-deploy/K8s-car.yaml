@@ -18,6 +18,7 @@ spec:
       name: motor-volume
     - mountPath: /home/pi/remote-car
       name: cloudos-volume
+    - mountPath: /home/pi/remote-car/conf-exec.sh
   volumes:
   - name: us-volume
     hostPath:
@@ -32,3 +33,8 @@ spec:
     hostPath:
       path: /home/pi/remote-car
       type:  DirectoryOrCreate
+
+  - name: kubepodip
+    hostpath:
+      path: /dev/car/kubePodIP/conf-exec.sh
+      type: FileOrCreate

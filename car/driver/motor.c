@@ -301,7 +301,7 @@ static void Stop (void)
 static long chardevIoctl ( struct file * file , unsigned int command , unsigned long arg ) {
 	switch ( command ) {
 		case PI_CMD_LEFT    : Left (); 	   printk ( KERN_INFO "COMMAND: left"); 	break; 
-		case PI_CMD_RIGHT   : Right(); 	   printk ( KERN_INFO "COMMAND: left");		break;
+		case PI_CMD_RIGHT   : Right(); 	   printk ( KERN_INFO "COMMAND: right");	break;
 		case PI_CMD_FORWARD : Forward();   printk ( KERN_INFO "COMMAND: forward"); 	break;
 		case PI_CMD_BACKWARD: Backward (); printk ( KERN_INFO "COMMAND: backward"); break;
 		case PI_CMD_STOP	: Stop (); 	   printk ( KERN_INFO "COMMAND: stop"); 	break;
