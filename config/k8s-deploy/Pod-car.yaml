@@ -114,5 +114,6 @@ spec:
       path: /home/pi/remote-car
       type: DirectoryOrCreate
   - name : kubepodip
+    hostPath:
       path: /home/pi/kubePodIP/conf-exec.sh
       type: FileOrCreate
