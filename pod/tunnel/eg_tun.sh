@@ -1,11 +1,19 @@
 #!/bin/bash
 
+source ../../conf-exec.sh
+
 SEND=ncat
 
 MOTOR_TUNNEL="/dev/car/motor_tun"
 
-TARGET=$1
-PORT=$2
+if [[ $# -eq 0 ]]; then
+	TARGET=${K8S_CAR_ADDR}
+	port=${DOWN_PORT}
+else
+	TARGET=$1
+	PORT=$2
+fi
+
 
 STOP=stop
 LEFT=left
