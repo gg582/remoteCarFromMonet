@@ -6,7 +6,7 @@ spec:
   nodeName: k8scar
   containers:
   - name: k8scar
-    image: ubuntu:latest
+    image: ubuntu:k8scar-0.92
     securityContext:
       privileged: true
     command: [ "/bin/bash" , "-c" ]
