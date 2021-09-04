@@ -35,7 +35,7 @@ spec:
       name: ir2-volume
     - mountPath: /dev/car/ir3
       name: ir3-volume
-  - name: tunnel # create tunnel container
+  - name: cartun # create tunnel container
     image: ubuntu:latest
     securityContext:
       privileged: true
