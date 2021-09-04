@@ -37,5 +37,5 @@ spec:
 
   - name: kubepodip
     hostPath:
-      path: /dev/car/kubePodIP/conf-exec.sh
+      path: /home/pi/kubePodIP/conf-exec.sh
       type: FileOrCreate
