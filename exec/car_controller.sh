@@ -2,4 +2,4 @@
 
 echo "Car controller begins"
 
-(cd ../car/controller/;./reader.sh;./writer.sh)
+(cd ../car/controller/;./relay.sh)
