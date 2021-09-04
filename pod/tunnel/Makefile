@@ -1,6 +1,6 @@
 CFLAGS = -O2 -w
 
-SRCS = catd.c
+SRCS = catd.c toss.c
 
 CMDS = $(patsubst %.c, %, $(SRCS))
 
