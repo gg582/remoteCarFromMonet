@@ -4,6 +4,9 @@ source ../../conf-exec.sh
 
 SEND=ncat
 
+echo "Welcome. This is a real car."
+echo "The virtual car has an IP: ${POD_CAR_ADDR}"
+
 while true
 do
 	DIST=$(./sonic)
