@@ -36,6 +36,6 @@ spec:
       type:  DirectoryOrCreate
 
   - name: kubepodip
-    hostpath:
+    hostPath:
       path: /dev/car/kubePodIP/conf-exec.sh
       type: FileOrCreate
