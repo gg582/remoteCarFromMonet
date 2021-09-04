@@ -8,7 +8,7 @@ MOTOR_TUNNEL="/dev/car/motor_tun"
 
 if [[ $# -eq 0 ]]; then
 	TARGET=${K8S_CAR_ADDR}
-	port=${DOWN_PORT}
+	PORT=${DOWN_PORT}
 else
 	TARGET=$1
 	PORT=$2
