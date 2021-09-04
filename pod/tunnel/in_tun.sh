@@ -1,14 +1,16 @@
 #!/bin/bash
 
+source ../../conf-exec.sh
+
 SONIC="/dev/car/sr04_tun"
 
 if [[ $# -eq 0 ]]
 then
-	echo "in_tun.sh <port number>"
-	exit 0
+	PORT=${UP_PORT}
+else
+	PORT=$1
 fi
 
-PORT=$1
 
 echo ""
 echo "Welcome. This an ingress of a sonar sensor tunnel."
