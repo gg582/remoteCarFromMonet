@@ -2,10 +2,10 @@
 
 source ../../conf-exec.sh
 
+echo "Waiting command from virtual car ..."
+
 while true
 do
-	echo "Waiting command ..."
-
 	cmd=$(ncat -lp ${DOWN_PORT})
 
 	case $cmd in
@@ -25,7 +25,7 @@ do
 		echo "CMD: forward"
 		./forward
 		;;
-	"BWRD")
+	"BKWD")
 		echo "CMD: backward"
 		./backward
 		;;
