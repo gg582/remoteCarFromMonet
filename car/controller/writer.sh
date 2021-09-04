@@ -25,7 +25,7 @@ do
 		echo "CMD: forward"
 		./forward
 		;;
-	"BWRD")
+	"BKWD")
 		echo "CMD: backward"
 		./backward
 		;;
