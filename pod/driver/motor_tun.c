@@ -176,6 +176,8 @@ static long car_motor_ioctl (struct file *filp, unsigned int command, unsigned l
 
 	PDEBUG("\"%s\" ioctl is called\n",current->comm);
 
+	count = MAX_CMD_STR_LEN;
+
 	count = min(count, (size_t)spacefree(dev));
 
 	if (dev->wp >= dev->rp)
@@ -183,11 +185,9 @@ static long car_motor_ioctl (struct file *filp, unsigned int command, unsigned l
 	else 
 		count = min(count, (size_t)(dev->rp - dev->wp - 1));
 
-#if 0
-	if ( count > MAX_CMD_STR_LEN ) return -1;
+#if 1
+	if ( count < MAX_CMD_STR_LEN ) return -1;
 #endif
-
-	count = MAX_CMD_STR_LEN;
 
 	switch (command) {
 		case	PI_CMD_STOP	: memcpy ( dev->wp, STOP, MAX_CMD_STR_LEN); break;
