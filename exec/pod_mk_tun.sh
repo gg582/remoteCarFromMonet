@@ -1,3 +1,3 @@
 #!/bin/bash
 
-(cd ../pod/tunnel;bg ./relay.sh)
+(cd ../pod/tunnel;./relay.sh)

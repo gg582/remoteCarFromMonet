@@ -108,6 +108,6 @@ spec:
       path: /dev/car/ir3_tun
       type: CharDevice
   - name: remote-car-volume
-    hostPath:
+    hostPath: 
       path: /home/pi/remote-car
       type: DirectoryOrCreate
