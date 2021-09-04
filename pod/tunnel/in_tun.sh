@@ -12,6 +12,7 @@ PORT=$1
 
 echo ""
 echo "Welcome. This an ingress of a sonar sensor tunnel."
+echo "We open a port of ${PORT}."
 echo ""
 
 while true
