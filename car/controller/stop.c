@@ -16,5 +16,7 @@ int main () {
 
 	ioctl ( dev , PI_CMD_STOP) ;
 
+	close (dev);
+
 	return 0 ;
 }

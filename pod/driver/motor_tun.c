@@ -183,7 +183,9 @@ static long car_motor_ioctl (struct file *filp, unsigned int command, unsigned l
 	else 
 		count = min(count, (size_t)(dev->rp - dev->wp - 1));
 
+#if 0
 	if ( count > MAX_CMD_STR_LEN ) return -1;
+#endif
 
 	count = MAX_CMD_STR_LEN;
 
@@ -210,6 +212,7 @@ static long car_motor_ioctl (struct file *filp, unsigned int command, unsigned l
 	return command;
 }
 
+#if 0
 static ssize_t car_motor_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
 {
 	struct car_motor_tun *dev = filp->private_data;
@@ -246,6 +249,7 @@ static ssize_t car_motor_write(struct file *filp, const char __user *buf, size_t
 	PDEBUG("\"%s\" did write %li bytes in motor\n",current->comm, (long)count);
 	return count;
 }
+#endif
 
 static unsigned int car_motor_poll(struct file *filp, poll_table *wait)
 {
@@ -276,7 +280,9 @@ struct file_operations car_motor_tun_fops = {
 	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
 	.read =		car_motor_read,
+#if 0
 	.write =	car_motor_write,
+#endif
 	.poll =		car_motor_poll,
 	.unlocked_ioctl = car_motor_ioctl,
 	.open =		car_motor_open,

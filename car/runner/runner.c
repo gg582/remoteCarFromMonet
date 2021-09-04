@@ -56,6 +56,8 @@ int main () {
 
 			ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) ) ;
 
+			printf ("stop --> (%d)\n", value);
+
 			sleep ( MOVE_TIME ) ;
 
 			ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) ) ;
@@ -65,6 +67,8 @@ int main () {
 			sleep ( MOVE_TIME ) ;
 
 			ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) ) ;
+
+			printf ("stop --> (%d)\n", value);
 
 			sleep ( MOVE_TIME ) ;
 
@@ -89,6 +93,8 @@ int main () {
 			ioctl ( dev , PI_CMD_FORWARD , sizeof ( struct ioctl_info ) ) ;
 
 			if ( !(step++ % LOOP_COUNT)) printf (	"forward --> (%d)\n", value);
+
+			step = 0;
 
 			usleep ( DETECT_TIME * ONE_MILI_SEC ) ;
 		}

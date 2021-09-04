@@ -2,5 +2,5 @@
 
 source ../../conf-exec.sh
 
-bg ./eg_tun.sh ${CAR_ADDR} ${DOWN_PORT}
-bg ./in_tun.sh ${UP_PORT}
+./eg_tun.sh ${K8S_CAR_ADDR} ${DOWN_PORT} &
+./in_tun.sh ${UP_PORT} &
