@@ -6,11 +6,11 @@ spec:
   nodeName: k8scar
   containers:
   - name: k8scar
-    image: ubuntu:k8scar-0.92
+    image: ubuntu:latest
     securityContext:
       privileged: true
     command: [ "/bin/bash" , "-c" ]
-    args: [ "while true ; do sleep 300 ; done ;" ] 
+    args: [ "apt-get update;apt-get install vim make net-tools gcc g++ golang-go ncat iputils-ping;while true ; do sleep 300 ; done ;" ] 
     volumeMounts:
     - mountPath: /dev/car/sr04
       name: us-volume

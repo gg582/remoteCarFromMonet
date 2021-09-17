@@ -21,7 +21,7 @@ spec:
     securityContext:
       privileged: true
     command: [ "/bin/bash" , "-c" ]
-    args: [ "while true ; do sleep 300 ; done ;" ] 
+    args: [ "apt-get update;apt-get install vim make net-tools gcc g++ golang-go ncat iputils-ping;while true ; do sleep 300 ; done ;" ] 
     volumeMounts:
     - mountPath: /dev/car/sr04
       name: us-volume
@@ -115,5 +115,5 @@ spec:
       type: DirectoryOrCreate
   - name : kubepodip
     hostPath:
-      path: /home/pi/kubePodIP/conf-exec.sh
+      path: /home/pi/remote-car/conf-exec.sh
       type: FileOrCreate
