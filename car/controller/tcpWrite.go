@@ -38,18 +38,16 @@ func handleError ( err error ) {
 func run ( connWriter net.Conn , ch chan []byte ) {
 
 	byte1 := make ( []byte , 5 )
+	motorFile , err := os.OpenFile ( "/dev/car/motor_tun" , os.O_RDWR , 0775 )
 
 	for {
 
-		motorFile , err := os.OpenFile ( "/dev/car/motor_tun" , os.O_RDWR , 0775 )
 
 		motor := bufio.NewReader ( motorFile ) 
 
 		handleError ( err )
 
 		byte1 , _ = motor.ReadBytes ( byte ( '\n' )  )
-
-		motorFile.Close ()
 
 		_ , _= connWriter.Write ( byte1 )
 
@@ -58,5 +56,6 @@ func run ( connWriter net.Conn , ch chan []byte ) {
 		ch <- byte1
 
 	}
+	motorFile.Close ()
 
 }
