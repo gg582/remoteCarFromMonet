@@ -32,6 +32,7 @@ func main () {
 
 		var conn net.Conn
 		var err error
+		ch := make ( chan Cartype , 1 )
 		for {
 
 			conn , err = net.Dial ( "tcp" , arguments [ 1 ] + ":10101"  )
@@ -47,13 +48,14 @@ func main () {
 		}
 
 	println ( "TCP connected" )
-	go func () {
+	go func (ch chan Cartype) {
 		var car Cartype
 		
 
+		go getSensorValue ( conn , car , ch )
 		for {
 
-				car = getSensorValue ( conn , car )
+				car = <- ch
 				log.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
 				log.Printf ( "/dev/car/ir0 --> %d\n" , car.Ir0Val )
 				log.Printf ( "/dev/car/ir1 --> %d\n" , car.Ir1Val )
@@ -97,23 +99,24 @@ func main () {
 				ir0File.Close ()
 				ir1File.Close ()
 		}
-	} ()
+	} (ch )
 	for {
 	}
 
 }
 
-func getSensorValue ( conn net.Conn , car Cartype ) Cartype {
+func getSensorValue ( conn net.Conn , car Cartype , ch chan Cartype ) {
 
-	conReader := bufio.NewReader ( conn ) 
-	buf , err := conReader.ReadSlice ( '\n' )
-	buf = bytes.Trim ( buf , "\x00\n" )
-	buf = bytes.TrimSpace ( buf )
-	println ( string ( buf ) )
-	err = json.Unmarshal ( buf , &car )
-	handleError ( err )
-	return car
-	
+	for {
+		conReader := bufio.NewReader ( conn ) 
+		buf , err := conReader.ReadSlice ( '\n' )
+		buf = bytes.Trim ( buf , "\x00\n" )
+		buf = bytes.TrimSpace ( buf )
+		println ( string ( buf ) )
+		err = json.Unmarshal ( buf , &car )
+		handleError ( err )
+		ch <- car
+	}
 }
 
 func handleError ( err error ) {
