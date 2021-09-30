@@ -1,0 +1,1 @@
+cmd_/home/pi/remote-car/car/driver/sr04.ko := ld -r  -EL  --build-id=sha1  -T scripts/module.lds -o /home/pi/remote-car/car/driver/sr04.ko /home/pi/remote-car/car/driver/sr04.o /home/pi/remote-car/car/driver/sr04.mod.o;  true
