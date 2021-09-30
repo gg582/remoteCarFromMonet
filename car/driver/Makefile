@@ -1,4 +1,4 @@
-obj-m += motor.o sr04.o
+obj-m += motor.o sr04.o ir.o
 
 CFLAGS= -I$(PWD)/../common
 

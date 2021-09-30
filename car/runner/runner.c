@@ -14,8 +14,8 @@
 
 #include <ioctl_car_cmd.h>
 
-#define AVOID_DIST	200
-#define LOOP_COUNT	100
+#define AVOID_DIST	90
+#define LOOP_COUNT	1000
 #define MOVE_TIME	1
 #define SLEEP_TIME	700
 #define ONE_MILI_SEC	1000	
