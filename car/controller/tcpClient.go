@@ -44,23 +44,23 @@ func main () {
 
 	
 func READ ( uport net.Conn , ch chan bool ) {
+	sr04FILE , err := os.OpenFile ( "/dev/car/sr04" , os.O_RDONLY, 0775 )
+	if err != nil {
+		log.Println ( err ) 
+	}
+	ir0FILE , err := os.OpenFile ( "/dev/car/ir0"  , os.O_RDONLY, 0775 )
+	if err != nil {
+		log.Println ( err ) 
+	}
+	ir1FILE , err := os.OpenFile ( "/dev/car/ir1" , os.O_RDONLY, 0775 )
+	if err != nil {
+		log.Println ( err ) 
+	}
+	sr04 := bufio.NewReader ( sr04FILE )
+	ir0 := bufio.NewReader ( ir0FILE )
+	ir1 := bufio.NewReader ( ir1FILE )
 	for {
 
-		sr04FILE , err := os.OpenFile ( "/dev/car/sr04" , os.O_RDONLY, 0775 )
-		if err != nil {
-			log.Println ( err ) 
-		}
-		ir0FILE , err := os.OpenFile ( "/dev/car/ir0"  , os.O_RDONLY, 0775 )
-		if err != nil {
-			log.Println ( err ) 
-		}
-		ir1FILE , err := os.OpenFile ( "/dev/car/ir1" , os.O_RDONLY, 0775 )
-		if err != nil {
-			log.Println ( err ) 
-		}
-		sr04 := bufio.NewReader ( sr04FILE )
-		ir0 := bufio.NewReader ( ir0FILE )
-		ir1 := bufio.NewReader ( ir1FILE )
 
 		var car Cartype
 
@@ -115,9 +115,6 @@ func READ ( uport net.Conn , ch chan bool ) {
 		fmt.Printf ( "sr04:%d ir0:%d ir1:%d \n" , car.Sr04Val , car.Ir0Val , car.Ir1Val )
 		_ , err = uport.Write ( byte4 )
 		fmt.Println ( string ( byte4 ) , len ( byte4 ) ) 
-		sr04FILE.Close ()
-		ir0FILE.Close ()
-		ir1FILE.Close ()
 		if err != nil {
 			log.Println ( err ) 
 			ch <- false
@@ -126,5 +123,8 @@ func READ ( uport net.Conn , ch chan bool ) {
 			ch <- true
 		}
 	}
+	sr04FILE.Close ()
+	ir0FILE.Close ()
+	ir1FILE.Close ()
 } 
 

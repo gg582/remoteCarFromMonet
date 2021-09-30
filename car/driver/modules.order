@@ -1,2 +1,3 @@
 /home/pi/remote-car/car/driver/motor.ko
 /home/pi/remote-car/car/driver/sr04.ko
+/home/pi/remote-car/car/driver/ir.ko
