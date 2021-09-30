@@ -14,10 +14,10 @@
 
 #include <ioctl_car_cmd.h>
 
-#define AVOID_DIST	100	
+#define AVOID_DIST	200
 #define LOOP_COUNT	100
 #define MOVE_TIME	1
-#define TURN_TIME	330
+#define SLEEP_TIME	700
 #define ONE_MILI_SEC	1000	
 bool isRunning = true ;
 
@@ -49,76 +49,82 @@ int main () {
 		int 	 ret;
 		u_int32_t value , ir0 , ir1 ;
 
-		ret = read ( sr04 , &value , sizeof ( ssize_t ) ) ;
-		if ( ret < 0 ) continue ;
-		ret = read ( ir [ 0 ]  , &ir0 , sizeof ( ssize_t ) ) ;
-		if ( ret < 0 ) continue ;
-		ret = read ( ir [ 1 ] , &ir1 , sizeof ( ssize_t ) ) ;
-		if ( ret < 0 ) continue ;
+		ret = read ( sr04 , &value , sizeof ( u_int32_t ) ) ;
+		if ( ret < 0 ) ioctl ( dev , PI_CMD_STOP , sizeof ( struct ioctl_info ) );
+		ret = read ( ir [ 0 ]  , &ir0 , sizeof ( u_int32_t ) ) ;
+		if ( ret < 0 ) ioctl ( dev , PI_CMD_STOP , sizeof ( struct ioctl_info ) ) ;
+		ret = read ( ir [ 1 ] , &ir1 , sizeof ( u_int32_t ) ) ;
+		if ( ret < 0 )  ioctl ( dev , PI_CMD_STOP , sizeof ( struct ioctl_info ) ) ;
 
-		if ( value < AVOID_DIST ) {
+		
 
-			ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
-//			printf ("stop --> (%u)\n", value);
-
-//			sleep ( MOVE_TIME ) ;
-	
+	if ( value < AVOID_DIST ) {
 
 
-		ir0 = ! ir0 ;
-		ir1 = ! ir1 ;
-
-		if ( !ir0 && !ir1 ) {
+		if ( ir0 && ir1 ) {
 
 			ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
 			usleep ( 600 * ONE_MILI_SEC ) ;
-			ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
 		}
-		if ( ir0 ) {
-			while ( ir0 && ir1 ) {
-				ret = read ( ir [ 0 ]  , &ir0 , sizeof ( ssize_t ) ) ;
-				ret = read ( ir [ 1 ]  , &ir1 , sizeof ( ssize_t ) ) ;
-				ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info )) ;
+		else if ( ir1 ) {
+			ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info )) ;
+			while ( ir0 || ir1 ) {
+				ret = read ( ir [ 0 ]  , &ir0 , sizeof ( u_int32_t ) ) ;
+				ret = read ( ir [ 1 ]  , &ir1 , sizeof ( u_int32_t ) ) ;
 			}
 			printf ("left --> (%u)\n", value);
-			usleep ( TURN_TIME * ONE_MILI_SEC ) ;
-			} else {
+			ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
+			} else if ( ir0 ) {
 		
-				while ( ir0 && ir1 ) {
-					ret = read ( ir [ 0 ]  , &ir0 , sizeof ( ssize_t ) ) ;
-					ret = read ( ir [ 1 ]  , &ir1 , sizeof ( ssize_t ) ) ;
-					ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info ) );
+				ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info ) );
+				while ( ir0 || ir1 ) {
+					ret = read ( ir [ 0 ]  , &ir0 , sizeof ( u_int32_t ) ) ;
+					ret = read ( ir [ 1 ]  , &ir1 , sizeof ( u_int32_t ) ) ;
 				}
+				ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
 				printf ("right --> (%u)\n", value);
-				usleep ( TURN_TIME * ONE_MILI_SEC ) ;
 	
 			}
 
-		ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
-		if ( value < 60 ) {
-//			sleep ( MOVE_TIME ) ;
-			ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
+		} else {
 		
-			printf ("backward --> (%u)\n", value);
+			if ( ir0 && ir1 ) {
 
-			usleep ( 700 * ONE_MILI_SEC ) ;
+				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
+				usleep ( 600 * ONE_MILI_SEC ) ;
+				ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
+			}
+			else if ( ir1 ) {
+				ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info )) ;
+				while ( ir0 || ir1 ) {
+					ret = read ( ir [ 0 ]  , &ir0 , sizeof ( u_int32_t ) ) ;
+					ret = read ( ir [ 1 ]  , &ir1 , sizeof ( u_int32_t ) ) ;
+				}
+				ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
+				printf ("left --> (%u)\n", value);
+				} else if ( ir0 ) {
+			
+					ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info ) );
+					while ( ir0 || ir1 ) {
+						ret = read ( ir [ 0 ]  , &ir0 , sizeof ( u_int32_t ) ) ;
+						ret = read ( ir [ 1 ]  , &ir1 , sizeof ( u_int32_t ) ) ;
+					}
 
-			ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
+					ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
 
-			printf ("stop --> (%u)\n", value);
+					printf ("right --> (%u)\n", value);
+
+				} else {
+					ioctl ( dev , PI_CMD_FORWARD , sizeof ( struct ioctl_info ) );
+				}
+
+
+			if ( !(step++ % LOOP_COUNT)) printf (	"forward --> (%u)\n", value);
+
+				step = 0;
+
 		}
-//		sleep ( MOVE_TIME ) ;
 
-	} else {
-	
-		ioctl ( dev , PI_CMD_FORWARD , sizeof ( struct ioctl_info ) );
-
-
-		if ( !(step++ % LOOP_COUNT)) printf (	"forward --> (%u)\n", value);
-
-			step = 0;
-
-		}
 	}
 
 	ioctl ( dev , PI_CMD_STOP , sizeof ( struct ioctl_info ) ) ;
@@ -130,4 +136,5 @@ int main () {
 
 	return 0 ;
 }
+
 

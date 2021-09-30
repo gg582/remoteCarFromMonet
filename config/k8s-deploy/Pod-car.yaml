@@ -17,11 +17,11 @@ spec:
   nodeName: node1
   containers: # create car container
   - name: carcon
-    image: ubuntu:podcar-0.92
+    image: ubuntu:latest
     securityContext:
       privileged: true
     command: [ "/bin/bash" , "-c" ]
-    args: [ "apt-get update;apt-get install vim make net-tools gcc g++ golang-go ncat iputils-ping;while true ; do sleep 300 ; done ;" ] 
+    args: [ "while true; do sleep 300 ; done" ] 
     volumeMounts:
     - mountPath: /dev/car/sr04
       name: us-volume
@@ -38,11 +38,11 @@ spec:
     - mountPath: /home/pi/remote-car
       name: remote-car-volume
   - name: cartun # create tunnel container
-    image: ubuntu:podcar-0.92
+    image: ubuntu:latest
     securityContext:
       privileged: true
     command: [ "/bin/bash" , "-c" ]
-    args: [ "while true ; do sleep 300 ; done ;" ] 
+    args: [ "while true ; do sleep 300 ; done" ] 
     volumeMounts: #volumemounts
     - mountPath: /dev/car/sr04_tun
       name: us-volume4tun
@@ -58,8 +58,6 @@ spec:
       name: ir3-volume4tun
     - mountPath: /home/pi/remote-car
       name: remote-car-volume
-    - mountPath: /home/pi/remote-car/conf-exec.sh
-      name: kubepodip
   volumes: # volumes
   - name: us-volume
     hostPath:
@@ -113,7 +111,3 @@ spec:
     hostPath: 
       path: /home/pi/remote-car
       type: DirectoryOrCreate
-  - name : kubepodip
-    hostPath:
-      path: /home/pi/remote-car/conf-exec.sh
-      type: FileOrCreate

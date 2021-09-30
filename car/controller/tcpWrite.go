@@ -1,57 +1,62 @@
-package main 
+package main
 
 import (
 		"os"
-		"fmt"
+		"log"
+		"bufio"
 		"net"
 	   )
-
 func main () {
 
-	argument := os.Args 
 
-	if len ( argument ) == 1 {
 
-		return
-			
-	}
-
-	
-	port := ":" + argument [ 1 ] 
-
-	conn , err := net.Listen ( "tcp" , port )
-
+	con , err := net.Listen ( "tcp" , ":10102" )
 	handleError ( err ) 
+	connWriter , err := con.Accept ()
+	ch := make ( chan []byte )
 
-	
+	go run ( connWriter,  ch )
+	go func () {
+		for {
+			byte1 := make ( []byte , 5 )
+			byte1 = <- ch
+			if byte1 == nil {
+				continue
+			}
+			println ( string ( byte1 ) )
+		}
+	} ()
 	for {
-
-		connWriter , err := conn.Accept ()
-
-		handleError ( err )
-
-		motor , err := os.OpenFile ( "/dev/car/motor_tun" , os.O_RDONLY , 0775 )
-		
-		handleError ( err )
-
-		buf := make ( []byte , 5 )
-
-		_ , err  = motor.Read ( buf )
-		
-		handleError ( err )
-		
-		motor.Close ()
-
-		fmt.Println ( "%#U %#U %#U %#U" , buf )
-		connWriter.Write ( buf )
-
 	}
-
 }
 
-
-func handleError ( err  error ) {
+func handleError ( err error ) {
 	if err != nil {
-		panic ( err )
+		log.Println ( err )
 	}
+}	
+func run ( connWriter net.Conn , ch chan []byte ) {
+
+	byte1 := make ( []byte , 5 )
+
+	for {
+
+		motorFile , err := os.OpenFile ( "/dev/car/motor_tun" , os.O_RDWR , 0775 )
+
+		motor := bufio.NewReader ( motorFile ) 
+
+		handleError ( err )
+
+		byte1 , _ = motor.ReadBytes ( byte ( '\n' )  )
+
+		motorFile.Close ()
+
+		_ , _= connWriter.Write ( byte1 )
+
+		println ( string ( byte1 ) )
+
+		ch <- byte1
+
+	}
+
 }

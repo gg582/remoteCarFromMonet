@@ -10,7 +10,7 @@ spec:
     securityContext:
       privileged: true
     command: [ "/bin/bash" , "-c" ]
-    args: [ "apt-get update;apt-get install vim make net-tools gcc g++ golang-go ncat iputils-ping;while true ; do sleep 300 ; done ;" ] 
+    args: [ "while true ; do sleep 300 ; done" ] 
     volumeMounts:
     - mountPath: /dev/car/sr04
       name: us-volume
@@ -18,8 +18,6 @@ spec:
       name: motor-volume
     - mountPath: /home/pi/remote-car
       name: cloudos-volume
-    - mountPath: /home/pi/remote-car/conf-exec.sh
-      name: kubepodip
   volumes:
   - name: us-volume
     hostPath:
@@ -35,7 +33,3 @@ spec:
       path: /home/pi/remote-car
       type:  DirectoryOrCreate
 
-  - name: kubepodip
-    hostPath:
-      path: /home/pi/kubePodIP/conf-exec.sh
-      type: FileOrCreate
