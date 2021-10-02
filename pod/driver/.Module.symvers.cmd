@@ -1,1 +1,0 @@
-cmd_/home/pi/remote-car/pod/driver/Module.symvers := sed 's/ko$$/o/' /home/pi/remote-car/pod/driver/modules.order | scripts/mod/modpost -m -a   -o /home/pi/remote-car/pod/driver/Module.symvers -e -i Module.symvers   -T -

@@ -57,9 +57,8 @@ static int car_motor_open(struct inode *inode, struct file *filp)
 	}
 	dev->buffersize = car_motor_buffer;
 	dev->end = dev->buffer + dev->buffersize;
-	dev->rp = dev->wp = dev->buffer; /* rd and wr from the beginning */
+	dev->rp = dev->wp = dev->buffer; 
 
-	/* use f_mode,not  f_flags: it's cleaner (fs/open.c tells why) */
 	if (filp->f_mode & FMODE_READ)
 		dev->nreaders++;
 	if (filp->f_mode & FMODE_WRITE)
@@ -86,9 +85,6 @@ static int car_motor_release(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-/*
- * Data management: read and write
-*/
 static ssize_t car_motor_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
 	struct car_motor_tun *dev = filp->private_data;
@@ -129,8 +125,6 @@ static ssize_t car_motor_read(struct file *filp, char __user *buf, size_t count,
 	return count;
 }
 
-/* Wait for space for writing; caller must hold device semaphore.  On
- * error the semaphore will be released before returning. */
 static int car_getwritespace(struct car_motor_tun *dev, struct file *filp)
 {
 	while (spacefree(dev) == 0) { /* full */
@@ -212,55 +206,11 @@ static long car_motor_ioctl (struct file *filp, unsigned int command, unsigned l
 	return command;
 }
 
-#if 0
-static ssize_t car_motor_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
-{
-	struct car_motor_tun *dev = filp->private_data;
-	int result;
-
-	if (down_interruptible(&dev->sem))
-		return -ERESTARTSYS;
-
-	/* Make sure there's space to write */
-	result = car_getwritespace(dev, filp);
-	if (result)
-		return result; /* car_getwritespace called up(&dev->sem) */
-
-	/* ok, space is there, accept something */
-	count = min(count, (size_t)spacefree(dev));
-	if (dev->wp >= dev->rp)
-		count = min(count, (size_t)(dev->end - dev->wp)); /* to end-of-buf */
-	else /* the write pointer has wrapped, fill up to rp-1 */
-		count = min(count, (size_t)(dev->rp - dev->wp - 1));
-	PDEBUG("Going to accept %li bytes to %p from %p\n", (long)count, dev->wp, buf);
-	if (copy_from_user(dev->wp, buf, count)) {
-		up (&dev->sem);
-		return -EFAULT;
-	}
-	dev->wp += count;
-	if (dev->wp == dev->end)
-		dev->wp = dev->buffer; /* wrapped */
-	PDEBUG("\" (car_motor_write) dev->wp:%p    dev->rp:%p\" \n",dev->wp,dev->rp);
-	up(&dev->sem);
-
-	/* finally, awake any reader */
-	wake_up_interruptible(&dev->inq);  /* blocked in read() and select() */
-
-	PDEBUG("\"%s\" did write %li bytes in motor\n",current->comm, (long)count);
-	return count;
-}
-#endif
-
 static unsigned int car_motor_poll(struct file *filp, poll_table *wait)
 {
 	struct car_motor_tun *dev = filp->private_data;
 	unsigned int mask = 0;
 
-	/*
-	 * The buffer is circular; it is considered full
-	 * if "wp" is right behind "rp" and empty if the
-	 * two are equal.
-	 */
 	down(&dev->sem);
 	poll_wait(filp, &dev->inq,  wait);
 	poll_wait(filp, &dev->outq, wait);
@@ -272,10 +222,6 @@ static unsigned int car_motor_poll(struct file *filp, poll_table *wait)
 	return mask;
 }
 
-/*
- * The file operations for the pipe device
- * (some are overlayed with bare car)
- */
 struct file_operations car_motor_tun_fops = {
 	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
@@ -289,9 +235,6 @@ struct file_operations car_motor_tun_fops = {
 	.release =	car_motor_release,
 };
 
-/*
- * Set up a cdev entry.
- */
 static void car_motor_setup_cdev(struct car_motor_tun *dev, int index)
 {
 	int err, devno = car_motor_devno + index;
@@ -304,9 +247,6 @@ static void car_motor_setup_cdev(struct car_motor_tun *dev, int index)
 		printk(KERN_NOTICE "Error %d adding car_motor %d", err, index);
 }
 
-/*
- * Initialize the pipe devs; return how many we did.
- */
 int car_motor_init(dev_t firstdev)
 {
 	int i, result;
@@ -338,10 +278,6 @@ int car_motor_init(dev_t firstdev)
 	return car_motor_nr_devs;
 }
 
-/*
- * This is called by cleanup_module or on failure.
- * It is required to never fail, even if nothing was initialized first
- */
 void car_motor_cleanup(void)
 {
 	int i;

@@ -1,1 +1,0 @@
-cmd_/home/pi/remote-car/car/driver/modules.order := {   echo /home/pi/remote-car/car/driver/motor.ko;   echo /home/pi/remote-car/car/driver/sr04.ko;   echo /home/pi/remote-car/car/driver/ir.ko; :; } | awk '!x[$$0]++' - > /home/pi/remote-car/car/driver/modules.order

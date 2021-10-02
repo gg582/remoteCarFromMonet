@@ -35,15 +35,11 @@ module_param(car_nr_devs, int, S_IRUGO);
 module_param(car_quantum, int, S_IRUGO);
 module_param(car_qset, int, S_IRUGO);
 
-MODULE_AUTHOR("Alessandro Rubini, Jonathan Corbet");
-MODULE_LICENSE("Dual BSD/GPL");
+MODULE_AUTHOR("CraftX Inc.");
+MODULE_LICENSE("CraftX");
 
 struct car_dev *car_devices;	/* allocated in car_init_module */
 
-/*
- * Empty out the car device; must be called with the device
- * semaphore held.
- */
 int car_trim(struct car_dev *dev)
 {
 	struct car_qset *next, *dptr;
@@ -78,7 +74,6 @@ int car_open(struct inode *inode, struct file *filp)
 	dev = container_of(inode->i_cdev, struct car_dev, cdev);
 	filp->private_data = dev; /* for other methods */
 
-	/* now trim to 0 the length of the device if open was write-only */
 	if ( (filp->f_flags & O_ACCMODE) == O_WRONLY) {
 		if (down_interruptible(&dev->sem))
 			return -ERESTARTSYS;
@@ -92,14 +87,11 @@ int car_release(struct inode *inode, struct file *filp)
 {
 	return 0;
 }
-/*
- * Follow the list
- */
+
 struct car_qset *car_follow(struct car_dev *dev, int n)
 {
 	struct car_qset *qs = dev->data;
 
-        /* Allocate first qset explicitly if need be */
 	if (! qs) {
 		qs = dev->data = kmalloc(sizeof(struct car_qset), GFP_KERNEL);
 		if (qs == NULL)
@@ -107,7 +99,6 @@ struct car_qset *car_follow(struct car_dev *dev, int n)
 		memset(qs, 0, sizeof(struct car_qset));
 	}
 
-	/* Then follow the list */
 	while (n--) {
 		if (!qs->next) {
 			qs->next = kmalloc(sizeof(struct car_qset), GFP_KERNEL);
@@ -129,9 +120,9 @@ ssize_t car_read(struct file *filp, char __user *buf, size_t count,
                 loff_t *f_pos)
 {
 	struct car_dev *dev = filp->private_data; 
-	struct car_qset *dptr;	/* the first listitem */
+	struct car_qset *dptr;	
 	int quantum = dev->quantum, qset = dev->qset;
-	int itemsize = quantum * qset; /* how many bytes in the listitem */
+	int itemsize = quantum * qset; 
 	int item, s_pos, q_pos, rest;
 	ssize_t retval = 0;
 
@@ -142,18 +133,15 @@ ssize_t car_read(struct file *filp, char __user *buf, size_t count,
 	if (*f_pos + count > dev->size)
 		count = dev->size - *f_pos;
 
-	/* find listitem, qset index, and offset in the quantum */
 	item = (long)*f_pos / itemsize;
 	rest = (long)*f_pos % itemsize;
 	s_pos = rest / quantum; q_pos = rest % quantum;
 
-	/* follow the list up to the right position (defined elsewhere) */
 	dptr = car_follow(dev, item);
 
 	if (dptr == NULL || !dptr->data || ! dptr->data[s_pos])
-		goto out; /* don't fill holes */
+		goto out; 
 
-	/* read only up to the end of this quantum */
 	if (count > quantum - q_pos)
 		count = quantum - q_pos;
 
@@ -177,17 +165,15 @@ ssize_t car_write(struct file *filp, const char __user *buf, size_t count,
 	int quantum = dev->quantum, qset = dev->qset;
 	int itemsize = quantum * qset;
 	int item, s_pos, q_pos, rest;
-	ssize_t retval = -ENOMEM; /* value used in "goto out" statements */
+	ssize_t retval = -ENOMEM; 
 
 	if (down_interruptible(&dev->sem))
 		return -ERESTARTSYS;
 
-	/* find listitem, qset index and offset in the quantum */
 	item = (long)*f_pos / itemsize;
 	rest = (long)*f_pos % itemsize;
 	s_pos = rest / quantum; q_pos = rest % quantum;
 
-	/* follow the list up to the right position */
 	dptr = car_follow(dev, item);
 	if (dptr == NULL)
 		goto out;
@@ -261,21 +247,11 @@ struct file_operations car_fops = {
 	.release =  car_release,
 };
 
-/*
- * Finally, the module stuff
- */
-
-/*
- * The cleanup function is used to handle initialization failures as well.
- * Thefore, it must be careful to work correctly even if some of the items
- * have not been initialized
- */
 void car_cleanup_module(void)
 {
 	int i;
 	dev_t devno = MKDEV(car_major, car_minor);
 
-	/* Get rid of our char dev entries */
 	if (car_devices) {
 		for (i = 0; i < car_nr_devs; i++) {
 			car_trim(car_devices + i);
@@ -284,17 +260,12 @@ void car_cleanup_module(void)
 		kfree(car_devices);
 	}
 
-	/* cleanup_module is never called if registering failed */
 	unregister_chrdev_region(devno, car_nr_devs);
 
-	/* and call the cleanup functions for friend devices */
 	car_p_cleanup();
 	car_motor_cleanup();
 }
 
-/*
- * Set up the char_dev structure for this device.
- */
 static void car_setup_cdev(struct car_dev *dev, int index)
 {
 	int err, devno = MKDEV(car_major, car_minor + index);
@@ -303,7 +274,7 @@ static void car_setup_cdev(struct car_dev *dev, int index)
 	dev->cdev.owner = THIS_MODULE;
 	dev->cdev.ops = &car_fops;
 	err = cdev_add (&dev->cdev, devno, 1);
-	/* Fail gracefully if need be */
+
 	if (err)
 		printk(KERN_NOTICE "Error %d adding car%d", err, index);
 }
@@ -313,10 +284,7 @@ int car_init_module(void)
 {
 	int result, i;
 	dev_t dev = 0;
-/*
- * Get a range of minor numbers to work with, asking for a dynamic
- * major unless directed otherwise at load time.
- */
+
 	if (car_major) {
 		dev = MKDEV(car_major, car_minor);
 		result = register_chrdev_region(dev, car_nr_devs, "car");
@@ -329,18 +297,13 @@ int car_init_module(void)
 		return result;
 	}
 
-        /* 
-	 * allocate the devices -- we can't have them static, as the number
-	 * can be specified at load time
-	 */
 	car_devices = kmalloc(car_nr_devs * sizeof(struct car_dev), GFP_KERNEL);
 	if (!car_devices) {
 		result = -ENOMEM;
-		goto fail;  /* Make this more graceful */
+		goto fail;  
 	}
 	memset(car_devices, 0, car_nr_devs * sizeof(struct car_dev));
 
-        /* Initialize each device. */
 	for (i = 0; i < car_nr_devs; i++) {
 		car_devices[i].quantum = car_quantum;
 		car_devices[i].qset = car_qset;
@@ -348,7 +311,6 @@ int car_init_module(void)
 		car_setup_cdev(&car_devices[i], i);
 	}
 
-        /* At this point call the init function for creating the car_pipe devices */
 	dev = MKDEV(car_major, car_minor + car_nr_devs);
 	dev += car_p_init(dev);
 	dev += car_motor_init(dev);

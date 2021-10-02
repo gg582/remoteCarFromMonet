@@ -1,1 +1,0 @@
-cmd_/home/pi/remote-car/car/driver/motor.ko := ld -r  -EL  --build-id=sha1  -T scripts/module.lds -o /home/pi/remote-car/car/driver/motor.ko /home/pi/remote-car/car/driver/motor.o /home/pi/remote-car/car/driver/motor.mod.o;  true

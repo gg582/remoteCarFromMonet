@@ -1,18 +1,3 @@
-/*
- * pipe.c -- fifo driver for car
- *
- * Copyright (C) 2001 Alessandro Rubini and Jonathan Corbet
- * Copyright (C) 2001 O'Reilly & Associates
- *
- * The source code in this file can be freely used, adapted,
- * and redistributed in source or binary form, so long as an
- * acknowledgment appears in derived source files.  The citation
- * should list that the code comes from the book "Linux Device
- * Drivers" by Alessandro Rubini and Jonathan Corbet, published
- * by O'Reilly & Associates.   No warranty is attached;
- * we cannot take responsibility for errors or fitness for use.
- *
- */
  
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -38,7 +23,6 @@ struct car_pipe {
         struct cdev cdev;                  /* Char device structure */
 };
 
-/* parameters */
 static int car_p_nr_devs = CAR_P_NR_DEVS;	/* number of pipe devices */
 int car_p_buffer =  CAR_P_BUFFER;	/* buffer size */
 dev_t car_p_devno;			/* Our first device number */
@@ -73,7 +57,6 @@ static int car_p_open(struct inode *inode, struct file *filp)
 	dev->end = dev->buffer + dev->buffersize;
 	dev->rp = dev->wp = dev->buffer; /* rd and wr from the beginning */
 
-	/* use f_mode,not  f_flags: it's cleaner (fs/open.c tells why) */
 	if (filp->f_mode & FMODE_READ)
 		dev->nreaders++;
 	if (filp->f_mode & FMODE_WRITE)
@@ -94,15 +77,12 @@ static int car_p_release(struct inode *inode, struct file *filp)
 		dev->nwriters--;
 	if (dev->nreaders + dev->nwriters == 0) {
 		kfree(dev->buffer);
-		dev->buffer = NULL; /* the other fields are not checked on open */
+		dev->buffer = NULL; 
 	}
 	up(&dev->sem);
 	return 0;
 }
 
-/*
- * Data management: read and write
-*/
 static ssize_t car_p_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
 	struct car_pipe *dev = filp->private_data;
@@ -116,17 +96,19 @@ static ssize_t car_p_read(struct file *filp, char __user *buf, size_t count, lof
 		up(&dev->sem); /* release the lock */
 		if (filp->f_flags & O_NONBLOCK)
 			return -EAGAIN;
+
 		PDEBUG("\"%s\" reading: going to sleep\n", current->comm);
+
 		if (wait_event_interruptible(dev->inq, (dev->rp != dev->wp)))
-			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
-		/* otherwise loop, but first reacquire the lock */
+			return -ERESTARTSYS; 
+
 		if (down_interruptible(&dev->sem))
 			return -ERESTARTSYS;
 	}
-	/* ok, data is there, return something */
+
 	if (dev->wp > dev->rp)
 		count = min(count, (size_t)(dev->wp - dev->rp));
-	else /* the write pointer has wrapped, return data up to dev->end */
+	else 
 		count = min(count, (size_t)(dev->end - dev->rp));
 	if (copy_to_user(buf, dev->rp, count)) {
 		up (&dev->sem);
@@ -137,14 +119,11 @@ static ssize_t car_p_read(struct file *filp, char __user *buf, size_t count, lof
 		dev->rp = dev->buffer; /* wrapped */
 	up (&dev->sem);
 
-	/* finally, awake any writers and return */
 	wake_up_interruptible(&dev->outq);
 	PDEBUG("\"%s\" did read %li bytes\n",current->comm, (long)count);
 	return count;
 }
 
-/* Wait for space for writing; caller must hold device semaphore.  On
- * error the semaphore will be released before returning. */
 static int car_getwritespace(struct car_pipe *dev, struct file *filp)
 {
 	while (spacefree(dev) == 0) { /* full */
@@ -216,11 +195,6 @@ static unsigned int car_p_poll(struct file *filp, poll_table *wait)
 	struct car_pipe *dev = filp->private_data;
 	unsigned int mask = 0;
 
-	/*
-	 * The buffer is circular; it is considered full
-	 * if "wp" is right behind "rp" and empty if the
-	 * two are equal.
-	 */
 	down(&dev->sem);
 	poll_wait(filp, &dev->inq,  wait);
 	poll_wait(filp, &dev->outq, wait);
@@ -232,10 +206,6 @@ static unsigned int car_p_poll(struct file *filp, poll_table *wait)
 	return mask;
 }
 
-/*
- * The file operations for the pipe device
- * (some are overlayed with bare car)
- */
 struct file_operations car_pipe_fops = {
 	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
@@ -289,10 +259,6 @@ int car_p_init(dev_t firstdev)
 	return car_p_nr_devs;
 }
 
-/*
- * This is called by cleanup_module or on failure.
- * It is required to never fail, even if nothing was initialized first
- */
 void car_p_cleanup(void)
 {
 	int i;
