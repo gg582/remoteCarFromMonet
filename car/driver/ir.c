@@ -188,7 +188,7 @@ static void __exit DeviceExit ( void ) {
 module_init ( DeviceInit ) ;
 module_exit ( DeviceExit ) ;
 
-MODULE_LICENSE ( "GPL" ) ;
+MODULE_LICENSE ( "CraftX" ) ;
 
 
 

@@ -312,7 +312,7 @@ static long chardevIoctl ( struct file * file , unsigned int command , unsigned 
 module_init ( DeviceInit ) ;
 module_exit ( DeviceExit ) ;
 
-MODULE_LICENSE ( "GPL" ) ;
+MODULE_LICENSE ( "CraftX" ) ;
 
 
 

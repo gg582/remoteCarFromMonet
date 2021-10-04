@@ -1,1 +1,0 @@
-cmd_/home/pi/remote-car/pod/driver/car.mod := { echo  /home/pi/remote-car/pod/driver/main.o /home/pi/remote-car/pod/driver/sensor_tun.o /home/pi/remote-car/pod/driver/motor_tun.o;  echo; } > /home/pi/remote-car/pod/driver/car.mod
