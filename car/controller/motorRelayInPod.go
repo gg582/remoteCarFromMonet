@@ -2,47 +2,62 @@ package main
 
 import (
 		"os"
+		"time"
 		"log"
 		"bufio"
 		"net"
 	   )
 func main () {
+	
+	arguments := os.Args
 
+	if len ( arguments ) < 2 {
 
+		log.Println ( "Please provide IP" ) 
+		
+		return
 
-	con , err := net.Listen ( "tcp" , ":10102" )
-	handleError ( err ) 
-	connWriter , err := con.Accept ()
+	}
+
+	var connWriter net.Conn
+	var err error
+	for {
+		time.Sleep ( time.Second )
+		connWriter , err = net.Dial ( "tcp" , arguments [ 1 ] + ":10102" )
+			if err != nil {
+				println ( "waiting for TCP Connection Establishment" )
+			} else {
+				break
+			}
+	}
 	ch := make ( chan []byte )
 
 	go run ( connWriter,  ch )
-	go func () {
-		for {
+	for {
 			byte1 := make ( []byte , 5 )
-			byte1 = <- ch
+			byte1 = <-ch
 			if byte1 == nil {
 				continue
 			}
 			println ( string ( byte1 ) )
-		}
-	} ()
-	for {
-	}
+		} 
 }
 
 func handleError ( err error ) {
 	if err != nil {
 		log.Println ( err )
 	}
-}	
+}
+
 func run ( connWriter net.Conn , ch chan []byte ) {
 
 	byte1 := make ( []byte , 5 )
 
+	motorFile , err := os.OpenFile ( "/dev/car/motor" , os.O_RDWR , 0775 )
 	for {
 
-		motorFile , err := os.OpenFile ( "/dev/car/motor_tun" , os.O_RDWR , 0775 )
-		motor := bufio.NewReader ( motorFile ) 
+
+		motor := bufio.NewReader ( motorFile )
 
 		handleError ( err )
 
@@ -54,7 +69,7 @@ func run ( connWriter net.Conn , ch chan []byte ) {
 
 		ch <- byte1
 
-		motorFile.Close ()
 	}
-
+	motorFile.Close ()
 }
+

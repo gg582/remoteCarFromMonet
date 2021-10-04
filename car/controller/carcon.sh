@@ -1,2 +1,2 @@
 #!/bin/bash
-source ../../conf-exec.sh ; ./tcpServer $K8S_CAR_ADDR & ../runner/runner
+source ../../conf-exec.sh ; ./motorRelayInPod $K8S_CAR_ADDR
