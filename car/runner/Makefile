@@ -1,14 +1,6 @@
-
-CFLAGS = -O2 -I../common
-
-SRCS = runner.c
-
-CMDS = $(patsubst %.c, %, $(SRCS))
-
-all: $(CMDS)
-
-%: %.c
-	gcc $(CFLAGS) -o $@ $< 
+all:
+	go build runner.go
+	go install runner.go
 
 clean:
-	rm -f $(CMDS)
+	sudo rm -rf runner
