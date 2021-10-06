@@ -1,105 +1,181 @@
 package main
+
 import (
-	"net"
+
+	"io"
+	"time"
 	"os"
-	"os/exec"
+	"encoding/binary"
 	"log"
 	"bufio"
-	"bytes"
-//	"syscall"
-	"fmt"
+	"github.com/d2r2/go-i2c"
 )
+
+
+const (
+
+		AVOID_DIST uint32 = 100
+
+		IR0 = "/dev/car/ir0"
+		IR1 = "/dev/car/ir1"
+		SR04 = "/dev/car/sr04"
+
+		)
+	var devName []string = []string { SR04 , IR0 , IR1 }
+	var devFile map[string](*os.File ) = map[string](*os.File) { SR04 : nil , IR0 : nil , IR1 : nil }
+	var devFd map[string]uintptr = map[string]uintptr { SR04 : 0 , IR0 : 0 , IR1 : 0 }
+
+	var devByte map[string]([]byte)	   = map[string]([]byte)   { SR04 : nil , IR0 : nil , IR1 : nil }
+	var devReader map[string](*bufio.Reader) = map[string](*bufio.Reader) { SR04 : nil , IR0 : nil , IR1 : nil }
+	var devValue map[string]uint32	   = map[string]uint32	   { SR04 : 0 , IR0 : 0 , IR1 : 0 }
+
 func main () {
 
-	if len ( os.Args ) < 2 {
-		fmt.Println ( "Please provide IP" )
-		return
+
+	I2C , _ := i2c.NewI2C ( 0x16 , 1 )
+
+
+	for _ , name := range devName {
+		
+		devByte [ name ] = make ( []byte , 5 ) 
+
+		print ( name+":" )
+
+		devFile [ name ] , _ = os.OpenFile ( name , os.O_RDWR , 0775 )
+
+		println ( "opened" )
+
+		devReader [ name ] = bufio.NewReader ( devFile [ name ] )
+
+		println ( "bufio" )
+
+		_ , _ = devReader [ name ].Read ( devByte [ name ] ) 
+
+		println ( "read" )
+
+		devByte [ name ] = checkErr ( devByte [ name ] )
+
+		println ( "err" ) 
+
+		devValue [ name ]    = binary.LittleEndian.Uint32 ( devByte [ name ] )
+		
+		println (  devValue [ name ] ) 
+
 	}
-	PATH , err := os.Getwd ()
 
-	if err != nil {
-		log.Println ( err )
-	}
-	println ( PATH )
-
-	down := os.Args [ 1 ] + ":10102" 
-	var download net.Conn
-
-	var res string
-
-	ch := make ( chan string , 1 )
 	for {
-		download , err = net.Dial ( "tcp" , down )
-		if err == nil {
-			break
+		for _ , name := range devName {
+			_ , _ = devReader [ name ].Read ( devByte [ name ] ) 
+
+			println ( "read" )
+
+			devByte [ name ] = checkErr ( devByte [ name ] )
+
+			println ( "err" ) 
+
+			devValue [ name ]    = binary.LittleEndian.Uint32 ( devByte [ name ] )
+			
+			println (  devValue [ name ] ) 
+
 		}
-	}
 
-	go Run ( download , ch , PATH )
+		if devValue [ SR04 ] < AVOID_DIST {
 
-	for {
-		log.Println("response res -------> ", res)
-		res = <- ch
-		println ( res )
+			if ( devValue [ IR0 ] == 1 ) && ( devValue [ IR1 ] == 1 ) {
+
+				I2C.WriteBytes ( []byte { 0x01,0 , 0x4F , 0 , 0x4F } ) 
+				time.Sleep ( 1300 * time.Millisecond )
+
+
+			} else if devValue [ IR1 ] == 1 {
+				for ( devValue [ IR0 ] == 1 ) || ( devValue [ IR1 ] == 1 ) {
+
+					I2C.WriteBytes ( []byte { 0x01,0 , 0x3F , 1 , 0x4F } ) 
+					devByte [ IR0 ] , _ = io.ReadAll ( devReader [ IR0 ] )
+					devByte [ IR0 ] = checkErr ( devByte [ IR0 ])
+					devValue [ IR0 ] = binary.LittleEndian.Uint32 ( devByte [ IR0 ] )
+					devByte [ IR1 ] , _ = io.ReadAll ( devReader [ IR1 ] )
+					devByte [ IR1 ] = checkErr ( devByte [ IR1 ] )
+					devValue [ IR1 ] = binary.LittleEndian.Uint32 ( devByte [ IR1 ] )
+				}
+
+			} else if devValue [ IR0 ] == 1{
+
+				for ( devValue [ IR0 ] == 1 ) || ( devValue [ IR1 ] == 1 ) {
+
+					I2C.WriteBytes ( []byte { 0x01,1 , 0x4F , 0 , 0x3F } ) 
+					devByte [ IR0 ] , _ = io.ReadAll ( devReader [ IR0 ] )
+					devByte [ IR0 ] = checkErr ( devByte [ IR0 ])
+					devValue [ IR0 ] = binary.LittleEndian.Uint32 ( devByte [ IR0 ] )
+					devByte [ IR1 ] , _ = io.ReadAll ( devReader [ IR1 ] )
+					devByte [ IR1 ] = checkErr ( devByte [ IR1 ] )
+					devValue [ IR1 ] = binary.LittleEndian.Uint32 ( devByte [ IR1 ] )
+
+				}
+
+			} else {
+				if ( devValue [ IR0 ] == 1 ) && ( devValue [ IR1 ] == 1 ) {
+
+					I2C.WriteBytes ( []byte { 0x01,0 , 0x4F , 0 , 0x4F } ) 
+					time.Sleep ( 800 * time.Millisecond )
+
+				} else if devValue [ IR1 ] == 1 {
+					for ( devValue [ IR0 ] == 1 ) || ( devValue [ IR1 ] == 1 ) {
+
+						I2C.WriteBytes ( []byte { 0x01,0 , 0x3F , 1 , 0x4F } ) 
+						devByte [ IR0 ] , _ = io.ReadAll ( devReader [ IR0 ] )
+						devByte [ IR0 ] = checkErr ( devByte [ IR0 ])
+						devValue [ IR0 ] = binary.LittleEndian.Uint32 ( devByte [ IR0 ] )
+						devByte [ IR1 ] , _ = io.ReadAll ( devReader [ IR1 ] )
+						devByte [ IR1 ] = checkErr ( devByte [ IR1 ] )
+						devValue [ IR1 ] = binary.LittleEndian.Uint32 ( devByte [ IR1 ] )
+					}
+
+	
+				} else if devValue [ IR0 ] == 1{
+	
+					for ( devValue [ IR0 ] == 1 ) || ( devValue [ IR1 ] == 1 ) {
+
+						I2C.WriteBytes ( []byte { 0x01,1 , 0x4F , 0 , 0x3F } ) 
+						devByte [ IR0 ] , _ = io.ReadAll ( devReader [ IR0 ] )
+						devByte [ IR0 ] = checkErr ( devByte [ IR0 ])
+						devValue [ IR0 ] = binary.LittleEndian.Uint32 ( devByte [ IR0 ] )
+						devByte [ IR1 ] , _ = io.ReadAll ( devReader [ IR1 ] )
+						devByte [ IR1 ] = checkErr ( devByte [ IR1 ] )
+						devValue [ IR1 ] = binary.LittleEndian.Uint32 ( devByte [ IR1 ] )
+
+					}
+
+
+
+				} else {
+
+					I2C.WriteBytes ( []byte { 0x01,1 , 0x4F , 1 , 0x4F } ) 
+
+
+				}
+			}
+
+			log.Println( "Step 4")
+
+		}
+
 	}
-	//download.Close ()
 
 }
 
-func Run ( download net.Conn , ch chan string , PATH string ) {
-	for {
-		log.Println( "Step 1")
+func checkErr ( byteSlice []byte ) []byte {
 
-		downloadNew := bufio.NewReader ( download )
-		byte1 , err := downloadNew.ReadBytes ( byte ( '\n' ) )
-		if err != nil {
-			log.Println ( err ) 
-			continue
+		if len ( byteSlice ) != 4 {
+
+
+			for i := 0 ; i < 4 ; i ++ {
+
+				byteSlice = append ( byteSlice , 0 )
+
+			}
+
 		}
-		byte1 = bytes.Trim ( byte1 , "\n" )
-		var btString string
-		btString = string ( byte1 )
-		log.Println ( "btStinrg ----------->:", btString )
-
-		log.Println( "Step 2")
-
-		switch ( btString ) {
-			case "LEFT" :
-				log.Println( "Step 3" )
-				execute (  PATH+"/"+"left"  )
-			case "RGHT" :
-				execute (  PATH+"/"+"right"  )
-			case "FWRD" :
-				log.Println( "switch parameter ====>" , btString )
-				execute (  PATH+"/"+"forward"  )
-			case "BKWD" :
-				execute (  PATH+"/"+"backward"  )
-			case "STOP" :
-				execute (  PATH+"/"+"stop"  )
-			case "TERM" :
-				execute (  PATH+"/"+"stop"  )
-				os.Exit ( 1 ) 
-			case "GABG" :
-				execute ( PATH+"/"+"garbage"  )
-		}
-		log.Println( "Step 4")
-
-		ch <- btString
-		log.Println( "Step 5")
-	}
-}
-
-func execute ( cmd string  ) {
-	//err := syscall.Exec ( cmd , nil , os.Environ () )
-	log.Println( "6" )
-	res, err := exec.Command ( cmd ).Output ( )
-	if err != nil {
-
-		log.Println ( err )
-
-	}
-	log.Println("res from run", res )
-
-
+		return byteSlice
 }
 

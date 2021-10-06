@@ -1,4 +1,5 @@
-package main 
+package main
+
 import (
 	"net"
 	"fmt"
@@ -6,7 +7,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"bufio"
-	"io"
 	"log"
 )
 
@@ -69,53 +69,72 @@ func READ ( uport net.Conn , ch chan bool ) {
 		devFile [ name ], err = os.OpenFile ( name , os.O_RDONLY, 0775 )
 
 		if err != nil {
+
 			log.Println ( err )
+
 		}
 
 		devReader [ name ] = bufio.NewReader ( devFile [ name ] )
-
 
 	}
 
 	for {
 
-
 		var car Cartype
-
 
 		for i , name := range devName {
 
-			devByte [ name ] , _ = io.ReadAll ( devReader [ name ] )
+			_ , _ =  devReader [ name ].Read ( devByte [ name ])
 
 			if len ( devByte [ name ] ) < 4 {
+
 					for i := 0 ; i < 4 ; i ++ {
+
 						 devByte [ name ] = append (  devByte [ name ] , 0 )
+
 				}
+
 			}
 
 			switch ( i ) {
+
 				case 0 :
 
 					car.Sr04Val = binary.LittleEndian.Uint32 ( devByte [ name ] )
+
+					break
 				case 1 :
 
 					car.Ir0Val = binary.LittleEndian.Uint32 ( devByte [ name ] )
+
 					if car.Ir0Val > 1 {
+
 						car.Ir0Val = 1 
+
 					}
+
+					break
+
 				case 2 :
 
 					car.Ir1Val = binary.LittleEndian.Uint32 ( devByte [ name ] )
+
 					if car.Ir1Val > 1 {
+
 						car.Ir1Val = 1 
+
 					}
 
+					break
+
 			}
+
 		}
 		byte1 , err := json.Marshal ( & car )
+
 		if err != nil {
+
 			println ( "marshal error" )
-			continue
 		}
 		byte1 = append ( byte1 , byte ( '\n' ) )
 		fmt.Printf ( "sr04:%d ir0:%d ir1:%d \n" , car.Sr04Val , car.Ir0Val , car.Ir1Val )

@@ -1,3 +1,3 @@
 #!/bin/bash
-source ../../conf-exec.sh ; ./sendSensorValueToVirtCar & ./runner
+source ../../conf-exec.sh ; ./sendSensorValueToVirtCar & ./RealCarRunner
 
