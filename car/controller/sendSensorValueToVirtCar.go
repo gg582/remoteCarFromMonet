@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"bufio"
-	"io"
 	"log"
 )
 
@@ -85,7 +84,7 @@ func READ ( uport net.Conn , ch chan bool ) {
 
 		for i , name := range devName {
 
-			devByte [ name ] , _ = io.ReadAll ( devReader [ name ] )
+			_ , _ = devReader [ name ].Read( devByte [ name ] )
 
 			if len ( devByte [ name ] ) < 4 {
 					for i := 0 ; i < 4 ; i ++ {
