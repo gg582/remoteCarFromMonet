@@ -4,6 +4,7 @@ import (
 	"net"
 	"fmt"
 	"os"
+	"time"
 	"encoding/binary"
 	"encoding/json"
 	"bufio"
@@ -158,5 +159,6 @@ func READ ( uport net.Conn , ch chan bool ) {
 
 		}
 	}
+	time.Sleep ( time.Millisecond )
 }
 
