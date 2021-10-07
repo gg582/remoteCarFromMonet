@@ -4,7 +4,6 @@ import (
 		"net"
 		"log"
 		"bytes"
-		"time"
 		"os"
 		"encoding/binary"
 		"encoding/json"
@@ -126,7 +125,7 @@ func getSensorValue ( conn net.Conn , ch chan Cartype ) {
 
 
 		ch <- car
-		time.Sleep ( time.Millisecond * 40 ) ;
+		time.Sleep ( time.Millisecond * 90 ) ;
 	}
 }
 
