@@ -140,9 +140,6 @@ func READ ( uport net.Conn , ch chan bool ) {
 		}
 		byte1 = append ( byte1 , byte ( '\n' ) )
 		fmt.Printf ( "sr04:%d ir0:%d ir1:%d \n" , car.Sr04Val , car.Ir0Val , car.Ir1Val )
-		if ( car.Sr04Val == 0 ) {
-			log.Println ( "UltraSonic error" ) 
-		}
 
 		_ , err = uport.Write ( byte1 )
 
@@ -158,7 +155,7 @@ func READ ( uport net.Conn , ch chan bool ) {
 			ch <- true
 
 		}
-		time.Sleep ( time.Millisecond * 10 )
+		time.Sleep ( time.Millisecond * 60 )
 	}
 }
 
