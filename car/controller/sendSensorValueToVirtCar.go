@@ -84,7 +84,11 @@ func READ ( uport net.Conn , ch chan bool ) {
 
 		for i , name := range devName {
 
+<<<<<<< HEAD
 			_ , _ =  devReader [ name ].Read ( devByte [ name ])
+=======
+			_ , _ = devReader [ name ].Read( devByte [ name ] )
+>>>>>>> 86a2ecaa24d3edaa4b6037927e28ec507e796155
 
 			if len ( devByte [ name ] ) < 4 {
 

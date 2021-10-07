@@ -17,7 +17,7 @@
 #define AVOID_DIST  150
 #define LOOP_COUNT	1000
 #define MOVE_TIME	1
-#define SLEEP_TIME	700
+#define SLEEP_TIME	1000
 #define ONE_MILI_SEC	1000	
 bool isRunning = true ;
 
@@ -64,9 +64,9 @@ int main () {
 		if ( ir0 && ir1 ) {
 
 			ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
-			usleep ( 700 * ONE_MILI_SEC ) ;
+			usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 			ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
-			usleep ( 700 * ONE_MILI_SEC ) ;
+			usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 		}
 		else if ( ir0 ) {
 			ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info )) ;
@@ -93,9 +93,9 @@ int main () {
 			if ( ir0 && ir1 ) {
 
 				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
-				usleep ( 700 * ONE_MILI_SEC ) ;
+				usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 				ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
-				usleep ( 700 * ONE_MILI_SEC ) ;
+				usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 			}
 			else if ( ir0 ) {
 				ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info )) ;
@@ -114,14 +114,14 @@ int main () {
 
 
 					ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
-					usleep ( 700 * ONE_MILI_SEC ) ;
+					usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 					printf ("right --> (%u)\n", value);
 
 				} else {
 					ioctl ( dev , PI_CMD_FORWARD , sizeof ( struct ioctl_info ) );
-					usleep ( 700 * ONE_MILI_SEC ) ;
+					usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 					ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
-					usleep ( 700 * ONE_MILI_SEC ) ;
+					usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 				}
 
 

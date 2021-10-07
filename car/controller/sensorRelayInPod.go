@@ -72,7 +72,6 @@ func main () {
 
 	go setSensorValue (ch)
 	for {
-		println ( "-----------------------" )
 	}
 }
 
