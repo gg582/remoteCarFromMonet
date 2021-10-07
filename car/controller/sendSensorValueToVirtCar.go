@@ -81,9 +81,8 @@ func READ ( uport net.Conn , ch chan bool ) {
 	for {
 
 		var car Cartype
-		devByte [name]  = []byte { 0 , 0 , 0 , 0 , 0 }
-
 		for i , name := range devName {
+			devByte [name]  = []byte { 0 , 0 , 0 , 0 , 0 }
 			devByte [ name ] = make ( []byte , 5 ) ;
 
 			_ , _ = devReader [ name ].Read( devByte [ name ] )
