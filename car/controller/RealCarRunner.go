@@ -61,31 +61,31 @@ func Run ( download net.Conn , ch chan string ) {
 		switch ( btString ) {
 
 			case "LEFT" :
-				_ , _ = I2C.WriteBytes ( []byte { 1 , 0x3F , 0 , 0x4F } )
+				_ , _ = I2C.WriteBytes ( []byte { 0x01 , 1 , 0x3F , 0 , 0x4F } )
 				
 				log.Println( "Step 3" )
 
 				break
 
 			case "RGHT" :
-				_ , _ = I2C.WriteBytes ( []byte { 0 , 0x4F , 1 , 0x3F } )
+				_ , _ = I2C.WriteBytes ( []byte {  0x01 ,0 , 0x4F , 1 , 0x3F } )
 				break
 			case "FWRD" :
 
-				_ , _ = I2C.WriteBytes ( []byte { 0 , 0x4F , 0 , 0x4F } )
+				_ , _ = I2C.WriteBytes ( []byte {  0x01 ,0 , 0x4F , 0 , 0x4F } )
 				log.Println( "switch parameter ====>" , btString )
 				break
 			case "BKWD" :
 
-				_ , _ = I2C.WriteBytes ( []byte { 1 , 0x4F , 1 , 0x4F } )
+				_ , _ = I2C.WriteBytes ( []byte {  0x01 ,1 , 0x4F , 1 , 0x4F } )
 				break
 			case "STOP" :
 
-				_ , _ = I2C.WriteBytes ( []byte { 0 , 0 , 0 , 0 } )
+				_ , _ = I2C.WriteBytes ( []byte {  0x01 ,0 , 0 , 0 , 0 } )
 				break
 			case "TERM" :
 
-				_ , _ = I2C.WriteBytes ( []byte { 0 , 0 , 0 , 0 } )
+				_ , _ = I2C.WriteBytes ( []byte {  0x01 ,0 , 0 , 0 , 0 } )
 				os.Exit ( 1 ) 
 				break
 
