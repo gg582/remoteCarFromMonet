@@ -53,7 +53,7 @@ func run ( connWriter net.Conn , ch chan []byte ) {
 
 	byte1 := make ( []byte , 5 )
 
-	motorFile , err := os.OpenFile ( "/dev/car/motor" , os.O_RDWR , 0775 )
+	motorFile , err := os.OpenFile ( "/dev/car/motor_tun" , os.O_RDWR , 0775 )
 	for {
 
 

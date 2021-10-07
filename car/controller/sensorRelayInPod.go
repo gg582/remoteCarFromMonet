@@ -26,6 +26,7 @@ const (
 var devNames []string = []string { DEV_SR04, DEV_IR0, DEV_IR1 }
 
 var devFds		map[string]*os.File		 = map[string]*os.File {	 DEV_SR04: nil, DEV_IR0: nil, DEV_IR1: nil, }
+var devWriters		map[string]*bufio.Writer		 = map[string]*bufio.Writer {	 DEV_SR04: nil, DEV_IR0: nil, DEV_IR1: nil, }
 var devBuffer	map[string]*bytes.Buffer = map[string]*bytes.Buffer{ DEV_SR04: new (bytes.Buffer), DEV_IR0: new (bytes.Buffer), DEV_IR1: new (bytes.Buffer), }
 var devValue    map[string]uint32		 = map[string]uint32{ DEV_SR04: 0, DEV_IR0: 0, DEV_IR1: 0, }
 
@@ -64,25 +65,32 @@ func main () {
 	for _, name := range devNames {
 			devFds [name] = openFile ( name )
 			defer devFds[name].Close ()
+			devWriters [ name ] = bufio.NewWriter ( devFds [ name ] )
 	}
 
 	ch := make ( chan Cartype , 1 )
 
-	go getSensorValue ( conn , ch )
+	chBool := make ( chan bool , 1 )
+	go getSensorValue ( conn , ch , chBool )
 
-	go setSensorValue (ch)
+	go setSensorValue ( ch , chBool )
 	for {
+		time.Sleep ( time.Second * 100 )
 	}
 }
 
-func setSensorValue (ch chan Cartype) {
+func setSensorValue (ch chan Cartype , c chan bool) {
 
 	var car Cartype
 
 	for {
+
+		flag := <- c
+		println ( flag )
+		if flag == false {
+			continue
+		}
 		car = <-ch
-
-
 
 		log.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
 		log.Printf ( "/dev/car/ir0 --> %d\n" , car.Ir0Val )
@@ -95,7 +103,7 @@ func setSensorValue (ch chan Cartype) {
 		for _, name := range devNames {
 			err := binary.Write (  devBuffer [name] , binary.LittleEndian , devValue [name])
 			manageError ( err )
-			_ , err = devFds[name].Write ( devBuffer [name].Bytes () )
+			_ , err = devWriters[name].Write( devBuffer [name].Bytes () )
 			manageError ( err )
 		}
 	}
@@ -107,25 +115,33 @@ func openFile ( name string) *os.File {
 	return fd;
 }
 
-func getSensorValue ( conn net.Conn , ch chan Cartype ) {
+func getSensorValue ( conn net.Conn , ch chan Cartype , c chan bool ) {
 
 	var car Cartype
 
 	for {
 
-		conReader := bufio.NewReader ( conn )
+		conReader :=  bufio.NewReader ( conn )
 
-		buf , _ := conReader.ReadSlice ( '\n' )
+		buf , err := conReader.ReadBytes ( byte ( '\n' ) )
+		manageError ( err ) 
+		if err != nil {
+			c <- false
+			continue
+		}
 
-		buf = bytes.Trim ( buf , "\x00\n" )
-
-		println ( string ( buf ) )
-
-		json.Unmarshal ( buf , &car )
-
-
-		ch <- car
-		time.Sleep ( time.Millisecond * 90 ) ;
+		bufSlice := bytes.Split ( buf , []byte (  "\x00" ) )
+		for _ , i := range bufSlice {
+			println ( string ( buf ) )
+			err = json.Unmarshal ( i , & car ) 
+			manageError ( err ) 
+			ch <- car
+			if err != nil {
+				c <- false
+					break
+			}
+		}
+		c <- true
 	}
 }
 
