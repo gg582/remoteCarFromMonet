@@ -155,7 +155,7 @@ func READ ( uport net.Conn , ch chan bool ) {
 			ch <- true
 
 		}
-		time.Sleep ( time.Millisecond * 60 )
+		time.Sleep ( time.Millisecond * 100 )
 	}
 }
 
