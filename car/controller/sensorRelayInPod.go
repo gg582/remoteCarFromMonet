@@ -9,6 +9,7 @@ import (
 		"encoding/binary"
 		"encoding/json"
 		"bufio"
+		"time"
 	   )
 
 type Cartype struct {
@@ -82,9 +83,6 @@ func setSensorValue (ch chan Cartype) {
 	for {
 		car = <-ch
 
-		if ( car.Sr04Val == 0 ) && ( car.Ir0Val == 0 ) && ( car.Ir1Val == 0 ) {
-			continue
-		}
 
 
 		log.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
@@ -106,7 +104,7 @@ func setSensorValue (ch chan Cartype) {
 
 func openFile ( name string) *os.File {
 	fd , err :=			os.OpenFile (  name, os.O_RDWR , 0775 )
-	handleError ( err )
+	manageError ( err )
 	return fd;
 }
 
@@ -122,14 +120,13 @@ func getSensorValue ( conn net.Conn , ch chan Cartype ) {
 
 		buf = bytes.Trim ( buf , "\x00\n" )
 
-		buf = bytes.TrimSpace ( buf )
-
 		println ( string ( buf ) )
 
 		json.Unmarshal ( buf , &car )
 
 
 		ch <- car
+		time.Sleep ( time.Millisecond * 40 ) ;
 	}
 }
 
@@ -139,9 +136,4 @@ func manageError ( err error ) {
 	}
 }
 
-func handleError ( err error ) {
-	if ( err != nil ) {
-		log.Fatal ( err )
-	}
-}
 
