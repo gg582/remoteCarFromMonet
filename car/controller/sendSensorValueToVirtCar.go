@@ -159,6 +159,6 @@ func READ ( uport net.Conn , ch chan bool ) {
 
 		}
 	}
-	time.Sleep ( time.Millisecond )
+	time.Sleep ( time.Millisecond * 10 )
 }
 
