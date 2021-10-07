@@ -82,6 +82,11 @@ func setSensorValue (ch chan Cartype) {
 	for {
 		car = <-ch
 
+		if ( car.Sr04Val == 0 ) && ( car.Ir0Val == 0 ) && ( car.Ir1Val == 0 ) {
+			continue
+		}
+
+
 		log.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
 		log.Printf ( "/dev/car/ir0 --> %d\n" , car.Ir0Val )
 		log.Printf ( "/dev/car/ir1 --> %d\n" , car.Ir1Val )
@@ -122,6 +127,7 @@ func getSensorValue ( conn net.Conn , ch chan Cartype ) {
 		println ( string ( buf ) )
 
 		json.Unmarshal ( buf , &car )
+
 
 		ch <- car
 	}
