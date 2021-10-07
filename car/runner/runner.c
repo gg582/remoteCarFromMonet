@@ -17,7 +17,7 @@
 #define AVOID_DIST  150
 #define LOOP_COUNT	1000
 #define MOVE_TIME	1
-#define SLEEP_TIME	1000
+#define SLEEP_TIME	300
 #define ONE_MILI_SEC	1000	
 bool isRunning = true ;
 
