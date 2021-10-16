@@ -25,7 +25,7 @@ type Cartype struct {
 const (
 	DEV_SR04 = "/dev/car/sr04_tun"
 	DEV_IR0  = "/dev/car/left_ir_tun"
-	DEV_IR1  = "/dev/car/left_ir_tun"
+	DEV_IR1  = "/dev/car/right_ir_tun"
 )
 
 var devNames []string = []string { DEV_SR04, DEV_IR0, DEV_IR1 }
