@@ -19,6 +19,7 @@
 #define MOVE_TIME	1
 #define SLEEP_TIME	300
 #define ONE_MILI_SEC	1000	
+
 bool isRunning = true ;
 
 void sigHandler ( int dummy ) {

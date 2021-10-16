@@ -36,7 +36,7 @@ module_param(car_quantum, int, S_IRUGO);
 module_param(car_qset, int, S_IRUGO);
 
 MODULE_AUTHOR("CraftX Inc.");
-MODULE_LICENSE("CraftX");
+MODULE_LICENSE("GPL");
 
 struct car_dev *car_devices;	/* allocated in car_init_module */
 

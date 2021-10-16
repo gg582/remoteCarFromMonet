@@ -16,16 +16,16 @@ type Cartype struct {
 
 		Sr04Val uint32
 
-		Ir0Val  uint32
+		IrLeftVal  uint32
 
-		Ir1Val  uint32
+		IrRightVal  uint32
 
 }
 
 const (
 	DEV_SR04 = "/dev/car/sr04_tun"
-	DEV_IR0  = "/dev/car/ir0_tun"
-	DEV_IR1  = "/dev/car/ir1_tun"
+	DEV_IR0  = "/dev/car/left_ir_tun"
+	DEV_IR1  = "/dev/car/left_ir_tun"
 )
 
 var devNames []string = []string { DEV_SR04, DEV_IR0, DEV_IR1 }
@@ -87,12 +87,12 @@ func setSensorValue (conn net.Conn , devWriters map[string]*bufio.Writer , devBu
 		car = getSensorValue ( conn )
 
 		fmt.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
-		fmt.Printf ( "/dev/car/ir0 --> %d\n" , car.Ir0Val )
-		fmt.Printf ( "/dev/car/ir1 --> %d\n" , car.Ir1Val )
+		fmt.Printf ( "/dev/car/ir_left --> %d\n" , car.IrLeftVal )
+		fmt.Printf ( "/dev/car/ir_right --> %d\n" , car.IrRightVal )
 
 		devValue [DEV_SR04] = car.Sr04Val
-		devValue [DEV_IR0 ] = car.Ir0Val
-		devValue [DEV_IR1 ] = car.Ir1Val
+		devValue [DEV_IR0 ] = car.IrLeftVal
+		devValue [DEV_IR1 ] = car.IrRightVal
 
 		writeBytes := make ( []byte , 4 )
 

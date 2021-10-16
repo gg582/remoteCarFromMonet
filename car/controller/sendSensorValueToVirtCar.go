@@ -12,14 +12,15 @@ import (
 
 type Cartype struct {
 	Sr04Val uint32
-	Ir0Val uint32
-	Ir1Val uint32
+	IrLeftVal uint32
+	IrRightVal uint32
+
 }
 
 const (
 	SR04_DEV = "/dev/car/sr04"
-	IR0_DEV = "/dev/car/ir0"
-	IR1_DEV = "/dev/car/ir1"
+	IR0_DEV = "/dev/car/left_ir"
+	IR1_DEV = "/dev/car/right_ir"
 )
 var	devName []string = []string{ SR04_DEV , IR0_DEV , IR1_DEV }
 
@@ -126,26 +127,26 @@ func READ ( uport net.Conn ) {
 					}
 
 				}
-				car.Ir0Val = binary.LittleEndian.Uint32 ( devByte [ devName [ 0 ] ] )
-				car.Ir1Val = binary.LittleEndian.Uint32 ( devByte [ devName [ 1 ] ] )
+				car.IrLeftVal = binary.LittleEndian.Uint32 ( devByte [ devName [ 0 ] ] )
+				car.IrRightVal = binary.LittleEndian.Uint32 ( devByte [ devName [ 1 ] ] )
 
 			case 1 :
 
-				car.Ir0Val = binary.LittleEndian.Uint32 ( devByte [ name ] )
+				car.IrLeftVal = binary.LittleEndian.Uint32 ( devByte [ name ] )
 
-				if car.Ir0Val > 1 {
+				if car.IrLeftVal > 1 {
 
-					car.Ir0Val = 1 
+					car.IrLeftVal = 1 
 
 				}
 
 			case 2 :
 
-				car.Ir1Val = binary.LittleEndian.Uint32 ( devByte [ name ] )
+				car.IrRightVal = binary.LittleEndian.Uint32 ( devByte [ name ] )
 
-				if car.Ir1Val > 1 {
+				if car.IrRightVal > 1 {
 
-					car.Ir1Val = 1 
+					car.IrRightVal = 1 
 
 				}
 			}
@@ -167,7 +168,7 @@ func READ ( uport net.Conn ) {
 
 		byte1 = append ( byte1 , byte ( '\n' ) )
 
-		log.Printf ( "sr04:%d ir0:%d ir1:%d \n" , car.Sr04Val , car.Ir0Val , car.Ir1Val )
+		log.Printf ( "sr04:%d ir_left:%d ir_right:%d \n" , car.Sr04Val , car.IrLeftVal , car.IrRightVal )
 
 		_ , err = uport.Write ( byte1 )
 

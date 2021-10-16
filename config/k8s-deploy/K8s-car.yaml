@@ -12,22 +12,16 @@ spec:
     command: [ "/bin/bash" , "-c" ]
     args: [ "while true ; do sleep 300 ; done" ] 
     volumeMounts:
-    - mountPath: /dev/car/sr04
-      name: us-volume
-    - mountPath: /dev/car/motor
-      name: motor-volume
+    - mountPath: /dev/car
+      name: car-volume
     - mountPath: /home/pi/remote-car
       name: cloudos-volume
   volumes:
-  - name: us-volume
+  - name: car-volume
     hostPath:
             #sr04 path
-      path: /dev/car/sr04
-      type: CharDevice
-  - name: motor-volume
-    hostPath:
-      path: /dev/car/motor
-      type:  CharDevice
+      path: /dev/car
+      type: Directory
   - name: cloudos-volume
     hostPath:
       path: /home/pi/remote-car

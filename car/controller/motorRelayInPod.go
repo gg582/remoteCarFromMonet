@@ -30,17 +30,8 @@ func main () {
 				break
 			}
 	}
-	ch := make ( chan []byte )
 
-	go run ( connWriter,  ch )
-	for {
-			byte1 := make ( []byte , 5 )
-			byte1 = <-ch
-			if byte1 == nil {
-				continue
-			}
-			println ( string ( byte1 ) )
-		} 
+	run ( connWriter )
 }
 
 func handleError ( err error ) {
@@ -49,11 +40,11 @@ func handleError ( err error ) {
 	}
 }
 
-func run ( connWriter net.Conn , ch chan []byte ) {
+func run ( connWriter net.Conn ) {
 
 	byte1 := make ( []byte , 5 )
 
-	motorFile , err := os.OpenFile ( "/dev/car/motor" , os.O_RDWR , 0775 )
+	motorFile , err := os.OpenFile ( "/dev/car/motor_tun" , os.O_RDWR , 0775 )
 	for {
 
 
@@ -70,8 +61,6 @@ func run ( connWriter net.Conn , ch chan []byte ) {
 		_ , _= connWriter.Write ( byte1 )
 
 		println ( string ( byte1 ) )
-
-		ch <- byte1
 
 	}
 	motorFile.Close ()

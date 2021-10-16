@@ -27,14 +27,10 @@ spec:
       name: us-volume
     - mountPath: /dev/car/motor
       name: motor-volume
-    - mountPath: /dev/car/ir0
+    - mountPath: /dev/car/left_ir
       name: ir0-volume
-    - mountPath: /dev/car/ir1
+    - mountPath: /dev/car/right_ir
       name: ir1-volume
-    - mountPath: /dev/car/ir2
-      name: ir2-volume
-    - mountPath: /dev/car/ir3
-      name: ir3-volume
     - mountPath: /home/pi/remote-car
       name: remote-car-volume
   - name: cartun # create tunnel container
@@ -48,14 +44,10 @@ spec:
       name: us-volume4tun
     - mountPath: /dev/car/motor_tun
       name: motor-volume4tun
-    - mountPath: /dev/car/ir0_tun
+    - mountPath: /dev/car/left_ir_tun
       name: ir0-volume4tun
-    - mountPath: /dev/car/ir1_tun
+    - mountPath: /dev/car/right_ir_tun
       name: ir1-volume4tun
-    - mountPath: /dev/car/ir2_tun
-      name: ir2-volume4tun
-    - mountPath: /dev/car/ir3_tun
-      name: ir3-volume4tun
     - mountPath: /home/pi/remote-car
       name: remote-car-volume
   volumes: # volumes
@@ -69,19 +61,11 @@ spec:
       type:  CharDevice
   - name: ir0-volume
     hostPath:
-      path: /dev/car/ir0
+      path: /dev/car/left_ir
       type: CharDevice
   - name: ir1-volume
     hostPath:
-      path: /dev/car/ir1
-      type: CharDevice
-  - name: ir2-volume
-    hostPath:
-      path: /dev/car/ir2
-      type: CharDevice
-  - name: ir3-volume
-    hostPath:
-      path: /dev/car/ir3
+      path: /dev/car/right_ir
       type: CharDevice
   - name: us-volume4tun
     hostPath:
@@ -93,19 +77,11 @@ spec:
       type:  CharDevice
   - name: ir0-volume4tun
     hostPath:
-      path: /dev/car/ir0_tun
+      path: /dev/car/right_ir_tun
       type: CharDevice
   - name: ir1-volume4tun
     hostPath:
-      path: /dev/car/ir1_tun
-      type: CharDevice
-  - name: ir2-volume4tun
-    hostPath:
-      path: /dev/car/ir2_tun
-      type: CharDevice
-  - name: ir3-volume4tun
-    hostPath:
-      path: /dev/car/ir3_tun
+      path: /dev/car/left_ir_tun
       type: CharDevice
   - name: remote-car-volume
     hostPath: 
