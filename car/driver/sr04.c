@@ -21,8 +21,8 @@
 #include <linux/types.h>
 #include <asm/io.h>
 
-#define GPIO_TRIG 				20
-#define GPIO_ECHO				21// GPIO PIN 
+#define GPIO_TRIG 				23
+#define GPIO_ECHO				24// GPIO PIN 
 
 dev_t 	dev = 0 ;
 char 	* ECHO_DESC = "ECHO" ;
@@ -215,7 +215,7 @@ static void __exit DeviceExit ( void ) {
 module_init ( DeviceInit ) ;
 module_exit ( DeviceExit ) ;
 
-MODULE_LICENSE ( "CraftX" ) ;
+MODULE_LICENSE ( "GPL" ) ;
 
 
 

@@ -1,5 +1,15 @@
-all :
-	gcc -o runner runner.c -I ../common
 
-clear :
-	sudo rm -rf runner
+CFLAGS = -O2 -I../common
+
+SRCS = runner.c
+
+CMDS = $(patsubst %.c, %, $(SRCS))
+
+all: $(CMDS)
+
+%: %.c
+	gcc $(CFLAGS) -o $@ $< 
+
+clean:
+	rm -f $(CMDS)
+

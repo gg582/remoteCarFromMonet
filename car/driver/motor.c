@@ -1,4 +1,3 @@
-#include <linux/delay.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
@@ -9,65 +8,47 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/delay.h>
+#include <linux/i2c.h>
 #include <linux/uaccess.h>
-#include <linux/gpio.h>
-#include <linux/kthread.h>
-#include <linux/threads.h>
 #include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/mutex.h>
 #include <asm/io.h>
-#include <linux/sched.h>
-#include <linux/smpboot.h>
 #include <stdbool.h>
 
 #include "../common/ioctl_car_cmd.h"
 
 #define BUFSIZE				2 // Defines Read Buffer
-#define WHEEL1 				18 // GPIO PIN 
-#define WHEEL2 				23
-#define WHEEL3 				24
-#define WHEEL4 				25
-#define ZEROCHAR 			48 // ZEROCHAR == '0'
-#define HIGH				1
-#define LOW					0
-#define MAX_LEVEL			99
-#define MAX_WHEEL_NUMBER		4
 
-#define MAX_SPEED			99
-#define MID_SPEED			40
-#define MIN_SPEED			0
+#define MAX_SPEED			0x4F
+#define MID_SPEED			0x2F
+#define MIN_SPEED			0x00
 
-#define TIME_MARGIN			100
-#define TIME_LAZY			1000
+#define I2C_BUS_AVAILABLE (	1	)
+#define SLAVE_DEV_NAME	  ( "CARMOTOR"	)
+#define MOTOR_SLAVE_ADDR  (	0x16	)
 
-enum {
-		WHEEL_IDX_1,
-		WHEEL_IDX_2,
-		WHEEL_IDX_3,
-		WHEEL_IDX_4
-};
+
+static struct i2c_adapter * motorI2CAdapter = NULL ;
+static struct i2c_client * motorI2CClient = NULL ;
+
+char LEFT[5] = 	  { 0x01 , 0x00 , MID_SPEED , 0x01 , MAX_SPEED } ;
+
+char RIGHT[5] =	  { 0x01 , 0x01 , MAX_SPEED , 0x00 , MID_SPEED } ;
+
+char FORWARD[5] = { 0x01 , 0x01 , MAX_SPEED , 0x01 , MAX_SPEED } ;
+
+char BACKWARD[5] ={ 0x01 , 0x00 , MAX_SPEED , 0x00 , MAX_SPEED } ;
+
+char STOP[5] =	  { 0x01 , 0x00 ,	0x00 , 0x00 ,	0x00   } ;
+
 
 dev_t		dev  = 0 ;
 bool		flag = 1 ;
-int32_t		level [MAX_WHEEL_NUMBER];
-
-#define SET_LEVEL(wheel_index,levelValue)  do {level [wheel_index] = levelValue; } while (false)
-
-int32_t			wheelPinNumber [MAX_WHEEL_NUMBER] = { WHEEL1, WHEEL2, WHEEL3, WHEEL4 };
-static struct   task_struct *writerTask;
-static struct 	mutex 	mutexMotor;
-
 
 static struct 	class * devClass ;
 static struct 	cdev myCharDevice ;
 
 static int __init DeviceInit ( void ) ;
 static void __exit DeviceExit ( void ) ;
-
-static bool    GPIO_init    (  void );
-static bool    createThread (  void );
-static int32_t pinHandler   ( void* argument );
 
 // Device Functions 
 static int DeviceOpen ( struct inode * inode , struct file * file ) ;
@@ -80,7 +61,7 @@ static void Right   ( void ) ;
 
 static long chardevIoctl ( struct file * , unsigned int , unsigned long ) ;
 
-static void pinWrite ( int ) ;
+int motor_write ( unsigned char * buf , unsigned int len ) ;
 
 // Match File Operation Functions into Structure 
 static struct file_operations fOpStruct = {
@@ -102,12 +83,35 @@ static int DeviceRelease ( struct inode * inode , struct file * file ) {
 	return 0 ;
 }
 
-static int __init DeviceInit ( void )
-{
+static const struct i2c_device_id motorID [] = {
+	{	SLAVE_DEV_NAME ,	0	} ,
+	{					} 
+} ;
+
+MODULE_DEVICE_TABLE ( i2c , motorID ) ;
+
+static struct i2c_driver motorI2CDriver = {
+
+	.driver = {
+		.name = SLAVE_DEV_NAME ,
+		.owner = THIS_MODULE ,
+	} , 
+	.probe	= NULL , 
+	.remove	= NULL ,
+	.id_table = motorID ,
+} ;
+
+static struct i2c_board_info MOTOR_INFO = {
+
+	I2C_BOARD_INFO ( SLAVE_DEV_NAME , MOTOR_SLAVE_ADDR ) 
+
+} ;
+
+static int __init DeviceInit ( void ) {
 
 	dev = MKDEV ( MAJOR ( dev ) , MINOR ( dev ) ) ;
 
-	if ( ( alloc_chrdev_region (&dev, 0, 1, "motor" ) ) < 0 )  { 
+	if ( ( alloc_chrdev_region (&dev, 0, 1, "i2cmotor" ) ) < 0 )  { 
 		printk  ( KERN_INFO "ERROR : cannot allocate major number" ) ;
 		return -1 ;
 	}
@@ -121,181 +125,103 @@ static int __init DeviceInit ( void )
 		goto r_class;
 	}
 
-	if ( ( devClass = class_create ( THIS_MODULE , "motorclass" ) ) == NULL ) {
+	if ( ( devClass = class_create ( THIS_MODULE , "i2cmotorClass" ) ) == NULL ) {
 		printk ( KERN_INFO "ERROR : cannot create the struct class" ) ;
 		goto r_class;
 	}
 
-	if ( ( device_create ( devClass , NULL , dev , NULL , "/car/motor" ) ) == NULL ) {
+	if ( ( device_create ( devClass , NULL , dev , NULL , "car/motor" ) ) == NULL ) {
 		printk ( "ERROR : CANNOT CREATE THE DEVICE" );
 		goto r_device;
 	}
 
-	if ( !GPIO_init () ) goto r_device;
+	motorI2CAdapter	=	i2c_get_adapter	( I2C_BUS_AVAILABLE ) ;
 
-	if ( !createThread () ) goto r_device;
+	if ( motorI2CAdapter == NULL ) {
+
+		class_destroy	(devClass)	 ;
+		unregister_chrdev_region (dev,1) ;
+		cdev_del      ( & myCharDevice ) ;
+		return -1 ;
+
+	}
+
+	motorI2CClient = i2c_new_client_device ( motorI2CAdapter , & MOTOR_INFO ) ;
+
+	if ( motorI2CClient == NULL ) {
+		class_destroy	(devClass)	 ;
+		unregister_chrdev_region (dev,1) ;
+		cdev_del      ( & myCharDevice ) ;
+		return -1 ;
+	}
+
+	i2c_add_driver ( & motorI2CDriver ) ;
 
 	printk ( KERN_INFO "motor is ready" );
 
+
 	return 0;
 
-r_device:
-		class_destroy(devClass);
-
 r_class:
-		unregister_chrdev_region(dev,1);
-		cdev_del ( & myCharDevice );
+		class_destroy	(devClass)	;
+
+r_device:
+		unregister_chrdev_region (dev,1);
+		cdev_del      ( & myCharDevice );
 
 	return -1;
 }
 
-static bool GPIO_init (void )
-{
-	int i;
 
-	for ( i = 0; i < MAX_WHEEL_NUMBER; i ++ ) 
-	{
-		if ( !(gpio_is_valid ( wheelPinNumber [i]) ) ) {
-			printk ( "ERROR : GPIO %d IS NOT VALID" , WHEEL1 ) ;
-			device_destroy ( devClass , dev ) ;
-			return false;
-		}
-		
-		if ( gpio_request ( wheelPinNumber [i], NULL ) < 0 ) {
-			printk ( "ERROR : CANNOT REQUEST GPIO %d" , wheelPinNumber [i]) ;
-			gpio_free( wheelPinNumber [i]);
-			return false;
-		}
-		
-		gpio_direction_output ( wheelPinNumber [i], 0 );
-
-		gpio_export ( wheelPinNumber [i], false );
-
-	}
-
-	printk ( KERN_INFO "GPIO pins are ready" );
-
-	return true;
-}
-
-static int32_t pinHandler ( void* argument )
-{
-	int idx;
-
-	while(!kthread_should_stop()) {
-		for ( idx = 0; idx < MAX_WHEEL_NUMBER; idx ++ ) pinWrite (idx); 
-		udelay (TIME_LAZY);
-	}
-
-	return 0;
-}
-
-static bool createThread (void) 
-{
-
-	mutex_init ( &mutexMotor );
-
-	writerTask = kthread_run ( pinHandler, NULL, "motor-control");
-
-	if ( !writerTask ) {
-		printk ( KERN_INFO "NOICE: errors in kthread creation");
-		return false;
-	} else {
-		wake_up_process(writerTask);
-	}
-
-	printk ( KERN_INFO "NOICE: kthreads are ready");
-
-    return true;
-}
 
 static void __exit DeviceExit () {
-	int i;
 
-	for ( i = 0; i < MAX_WHEEL_NUMBER; i ++ ) gpio_free	( wheelPinNumber [i]);
 
-	printk (KERN_INFO "GPIO pins are released");
+    i2c_unregister_device ( motorI2CClient ) ;
 
+    i2c_del_driver ( & motorI2CDriver ) ;
     device_destroy 	( devClass , dev ) ;
     class_destroy 	( devClass ) ;
     cdev_del 		( & myCharDevice ) ;
 
     unregister_chrdev_region ( dev , 1 ) ;
 
-	printk (KERN_INFO "Devices are released");
+    //filp_close ( motorI2CClient , NULL ) ;
 
-	if ( writerTask ) kthread_stop ( writerTask );
+    printk (KERN_INFO "Devices are released");
+
 
     printk 	( "Device Driver Remove : Success" );
 }
 
-static void pinWrite ( int idx ) 
-{
-	int32_t range 		= MAX_LEVEL;
-	int32_t pinNumber	= wheelPinNumber [idx];
-	int32_t mark;
-	int32_t space;
-	int32_t ret;
-
-	ret = mutex_lock_interruptible ( &mutexMotor );
-
-	if ( level [ idx ] > range ) level [idx ] = range;
-	
-	mark  = level [ idx ];
-	space = range - mark ;
-	
-	if (mark > 0) gpio_set_value (pinNumber, HIGH) ;
-	
-	udelay (mark * TIME_MARGIN);
-	
-	if (space > 0) gpio_set_value (pinNumber, LOW) ;
-	
-	udelay (space * TIME_MARGIN);
-
-	mutex_unlock ( &mutexMotor );
-
-}
 
 static void Forward ( void )
 
 { 
-	SET_LEVEL ( WHEEL_IDX_1, MAX_SPEED);
-	SET_LEVEL ( WHEEL_IDX_2, MAX_SPEED);
-	SET_LEVEL ( WHEEL_IDX_3, MIN_SPEED);
-	SET_LEVEL ( WHEEL_IDX_4, MIN_SPEED);
+
+	motor_write (  FORWARD , 5 ) ;
+
 }
 
 static void Backward ( void )
 { 
-	SET_LEVEL ( WHEEL_IDX_1, MIN_SPEED);
-	SET_LEVEL ( WHEEL_IDX_2, MIN_SPEED);
-	SET_LEVEL ( WHEEL_IDX_3, MAX_SPEED);
-	SET_LEVEL ( WHEEL_IDX_4, MAX_SPEED);
+	motor_write ( BACKWARD , 5 ) ;
 }
 
 // FAST TRUN LEFT
 static void Left (void)
 {
-	SET_LEVEL ( WHEEL_IDX_1, MID_SPEED);
-	SET_LEVEL ( WHEEL_IDX_2, MAX_SPEED);
-	SET_LEVEL ( WHEEL_IDX_3, MAX_SPEED);
-	SET_LEVEL ( WHEEL_IDX_4, MID_SPEED);
+	motor_write ( LEFT , 5 ) ;
 }
 
 static void Right (void)
 {
-	SET_LEVEL ( WHEEL_IDX_1, MAX_SPEED);
-	SET_LEVEL ( WHEEL_IDX_2, MID_SPEED);
-	SET_LEVEL ( WHEEL_IDX_3, MID_SPEED);
-	SET_LEVEL ( WHEEL_IDX_4, MAX_SPEED);
+	motor_write ( RIGHT , 5 ) ;
 }
 
 static void Stop (void)
 {
-	SET_LEVEL ( WHEEL_IDX_1, MIN_SPEED);
-	SET_LEVEL ( WHEEL_IDX_2, MIN_SPEED);
-	SET_LEVEL ( WHEEL_IDX_3, MIN_SPEED);
-	SET_LEVEL ( WHEEL_IDX_4, MIN_SPEED);
+	motor_write ( STOP , 5 ) ;
 }
 
 static long chardevIoctl ( struct file * file , unsigned int command , unsigned long arg ) {
@@ -309,10 +235,15 @@ static long chardevIoctl ( struct file * file , unsigned int command , unsigned 
 	return command;
 }
 
+int motor_write ( unsigned char * buf , unsigned int len ) {
+	int ret = i2c_master_send ( motorI2CClient , buf , 5 ) ;
+	return ret ;
+}
+
 module_init ( DeviceInit ) ;
 module_exit ( DeviceExit ) ;
 
-MODULE_LICENSE ( "CraftX" ) ;
+MODULE_LICENSE ( "GPL" ) ;
 
 
 
