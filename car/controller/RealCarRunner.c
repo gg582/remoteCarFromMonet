@@ -12,7 +12,8 @@
 #include <stdbool.h>
 #include "../common/ioctl_car_cmd.h"
 
-#define CMD_LEN 4
+#define CMD_LEN 5
+#define CMP_LEN 4
 #define DEVNAME 		"/dev/car/motor"
 #define DIR_FORWARD		"FWRD"
 #define DIR_LEFT		"LEFT"
@@ -125,24 +126,24 @@ int main(int argc, char **argv) {
         printf("server received %d bytes: %s", n, buf);
     }
 
-    if ( strcmp ( buf , DIR_FORWARD) == 0 ) {
+    if ( strncmp ( buf , DIR_FORWARD , CMP_LEN) == 0 ) {
         printf("DIRECTION --> FORWARD\n");
-    	ioctl ( motor , PI_CMD_FORWARD ) ;
-    } else if ( strcmp ( buf , DIR_LEFT) == 0 ) {
+    	ioctl ( motor , PI_CMD_FORWARD) ;
+    } else if ( strncmp ( buf , DIR_LEFT , CMP_LEN) == 0 ) {
         printf("DIRECTION --> LEFT\n");
-	ioctl ( motor , PI_CMD_LEFT ) ;
-    } else if ( strcmp ( buf , DIR_RIGHT) == 0 ) {
+	ioctl ( motor , PI_CMD_LEFT) ;
+    } else if ( strncmp ( buf , DIR_RIGHT,CMP_LEN) == 0 ) {
         printf("DIRECTION --> RIGHT\n");
 	ioctl ( motor , PI_CMD_RIGHT ) ;
-    } else if ( strcmp ( buf , DIR_BACKWARD) == 0 ) {
+    } else if ( strncmp ( buf , DIR_BACKWARD,CMP_LEN) == 0 ) {
         printf("DIRECTION --> BACKWARD\n");
-	ioctl ( motor , PI_CMD_BACKWARD ) ;
-    } else if ( strcmp ( buf , DIR_TERMINATION) == 0 ) {
+	ioctl ( motor , PI_CMD_BACKWARD) ;
+    } else if ( strncmp ( buf , DIR_TERMINATION, CMP_LEN) == 0 ) {
         printf("DIRECTION --> TERMINATION\n");
-	ioctl ( motor , PI_CMD_STOP ) ;
+	ioctl ( motor , PI_CMD_STOP) ;
     } else {
         printf("DEFAULT DIRECTION --> STOP\n");
-	ioctl ( motor , PI_CMD_STOP ) ;
+	ioctl ( motor , PI_CMD_STOP) ;
     }
   }
     close(childfd);

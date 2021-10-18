@@ -18,10 +18,9 @@
 #define GPIOPIN_RIGHT 			10
 #define LEFT_IR				GPIOPIN_LEFT
 #define RIGHT_IR			GPIOPIN_RIGHT
-#define IR_TURN_ON			25
-#define DEV_ENABLE			1
 
 #define IR_DETECTED			0
+#define IR_POWER_ON			25
 #define IR_NOT_DTECTED			1
 
 #define OBJECT_FOUND			1
@@ -189,9 +188,9 @@ static int __init DeviceInit ( void ) {
 		}
 
 		gpio_direction_input ( deviceArray [ i ] ) ;
-		
-		gpio_direction_output ( IR_TURN_ON , DEV_ENABLE ) ;
 
+		gpio_direction_output ( IR_POWER_ON , 1 ) ;
+		
 		gpio_export ( deviceArray [ i ] , false ) ;
 		
 	}	
@@ -206,7 +205,7 @@ static void __exit DeviceExit ( void ) {
 
 	int i ;
 
-	gpio_free ( IR_TURN_ON ) ;
+	gpio_free ( IR_POWER_ON ) ;
 
 	for( i = 0 ; i < DEVICE_NUM ; i ++ ) {
 
