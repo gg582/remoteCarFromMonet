@@ -19,7 +19,6 @@
 #define MOVE_TIME	1
 #define SLEEP_TIME	300
 #define ONE_MILI_SEC	1000	
-
 bool isRunning = true ;
 
 void sigHandler ( int dummy ) {
@@ -70,7 +69,7 @@ int main () {
 				usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
 
-			} else if ( ir0 ) {
+			} else if ( ir1 ) {
 
 				ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info )) ;
 
@@ -83,7 +82,7 @@ int main () {
 
 				ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
 
-			} else if ( ir1 ) {
+			} else if ( ir0 ) {
 			
 				ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info ) );
 
@@ -123,7 +122,7 @@ int main () {
 				usleep ( SLEEP_TIME * 2 * ONE_MILI_SEC ) ;
 				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
 			}
-			else if ( ir0 ) {
+			else if ( ir1 ) {
 				ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
 				usleep ( SLEEP_TIME * 2 * ONE_MILI_SEC ) ;
 				ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info )) ;
@@ -134,7 +133,7 @@ int main () {
 
 				printf ("left --> (%u)\n", value);
 
-			} else if ( ir1 ) {
+			} else if ( ir0 ) {
 			
 				ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
 
