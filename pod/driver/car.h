@@ -32,11 +32,11 @@
 #endif
 
 #ifndef CAR_NR_DEVS
-#define CAR_NR_DEVS 5    /* car0 through car3 */
+#define CAR_NR_DEVS 3   /* car0 through car3 */
 #endif
 
 #ifndef CAR_P_NR_DEVS
-#define CAR_P_NR_DEVS 5  /* carpipe0 through carpipe3 */
+#define CAR_P_NR_DEVS 3  /* carpipe0 through carpipe3 */
 #endif
 
 #ifndef CAR_P_NR_MOTORS

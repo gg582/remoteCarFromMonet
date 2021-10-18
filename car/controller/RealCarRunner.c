@@ -9,51 +9,24 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
+#include <stdbool.h>
 #include "../common/ioctl_car_cmd.h"
 
-#define BUFSIZE 5
+#define CMD_LEN 4
+#define DEVNAME 		"/dev/car/motor"
+#define DIR_FORWARD		"FWRD"
+#define DIR_LEFT		"LEFT"
+#define DIR_RIGHT		"RGHT"
+#define DIR_BACKWARD		"BKWD"
+#define DIR_TERMINATION		"TERM"
 
-#if 0
-/* 
- * Structs exported from in.h
- */
-
-/* Internet address */
-struct in_addr {
-  unsigned int s_addr; 
-};
-
-/* Internet style socket address */
-struct sockaddr_in  {
-  unsigned short int sin_family; /* Address family */
-  unsigned short int sin_port;   /* Port number */
-  struct in_addr sin_addr;	 /* IP address */
-  unsigned char sin_zero[...];   /* Pad to size of 'struct sockaddr' */
-};
-
-/*
- * Struct exported from netdb.h
- */
-
-/* Domain name service (DNS) host entry */
-struct hostent {
-  char    *h_name;        /* official name of host */
-  char    **h_aliases;    /* alias list */
-  int     h_addrtype;     /* host address type */
-  int     h_length;       /* length of address */
-  char    **h_addr_list;  /* list of addresses */
-}
-#endif
-
-/*
- * error - wrapper for perror
- */
 void error(char *msg) {
   perror(msg);
   exit(1);
 }
 
 int main(int argc, char **argv) {
+
   int parentfd; /* parent socket */
   int childfd; /* child socket */
   int portno; /* port to listen on */
@@ -61,10 +34,9 @@ int main(int argc, char **argv) {
   struct sockaddr_in serveraddr; /* server's addr */
   struct sockaddr_in clientaddr; /* client addr */
   struct hostent *hostp; /* client host info */
-  char buf[BUFSIZE]; /* message buffer */
+  char buf[CMD_LEN]; /* message buffer */
   char *hostaddrp; /* dotted decimal host addr string */
   int optval; /* flag value for setsockopt */
-  int n; /* message byte size */
 
   /* 
    * check command line arguments 
@@ -84,6 +56,7 @@ int main(int argc, char **argv) {
    * Eliminates "ERROR on binding: Address already in use" error. 
    */
   optval = 1;
+
   setsockopt(parentfd, SOL_SOCKET, SO_REUSEADDR, 
 	     (const void *)&optval , sizeof(int));
 
@@ -118,55 +91,59 @@ int main(int argc, char **argv) {
    * main loop: wait for a connection request, echo input line, 
    * then close connection.
    */
+
   clientlen = sizeof(clientaddr);
 
-  int motor = open ( "/dev/car/motor" , O_RDWR ) ;
-  while (1) {
+  childfd = accept(parentfd, (struct sockaddr *) &clientaddr, &clientlen);
 
-    /* 
-     * accept: wait for a connection request 
-     */
-    childfd = accept(parentfd, (struct sockaddr *) &clientaddr, &clientlen);
-    if (childfd < 0) 
-      error("ERROR on accept");
-    
-    /* 
-     * gethostbyaddr: determine who sent the message 
-     */
-    hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, 
-			  sizeof(clientaddr.sin_addr.s_addr), AF_INET);
-    if (hostp == NULL)
-      error("ERROR on gethostbyaddr");
-    hostaddrp = inet_ntoa(clientaddr.sin_addr);
-    if (hostaddrp == NULL)
-      error("ERROR on inet_ntoa\n");
-    printf("server established connection with %s (%s)\n", 
-	   hostp->h_name, hostaddrp);
-    
-    /* 
-     * read: read input string from the client
-     */
-    bzero(buf, BUFSIZE);
-    n = read(childfd, buf, BUFSIZE);
-    if (n < 0) 
-      error("ERROR reading from socket");
-    printf("server received %d bytes: %s", n, buf);
-    if ( strcmp ( buf , "FWRD\n" ) == 0 ) {
-	    ioctl ( motor , PI_CMD_FORWARD ) ;
-    } else if ( strcmp ( buf , "LEFT\n" ) == 0 ) {
-	    ioctl ( motor , PI_CMD_LEFT ) ;
-    } else if ( strcmp ( buf , "RGHT\n" ) == 0 ) {
-	    ioctl ( motor , PI_CMD_RIGHT ) ;
-    } else if ( strcmp ( buf , "BKWD\n" ) == 0 ) {
-	    ioctl ( motor , PI_CMD_BACKWARD ) ;
-    } else if ( strcmp ( buf , "TERM\n" ) == 0 ) {
-	     ioctl ( motor , PI_CMD_STOP ) ;
-	     break; 
-    } else {
-	    ioctl ( motor , PI_CMD_STOP ) ;
+
+  if (childfd < 0) 
+    error("ERROR on accept");
+ 
+  int motor = open ( DEVNAME, O_RDWR ) ;
+
+  while (true) {
+
+    int recvSize = 0;
+    int n = 0;
+
+    bzero(buf, CMD_LEN);
+
+    while ( n < CMD_LEN) {
+    	recvSize = read(childfd, buf, CMD_LEN - n);
+	n += recvSize;
     }
-    
-    
+
+    if (n < 0) {
+      error("ERROR reading from socket");
+    }
+
+    if ( n == 0 ) {
+    	printf("We have lost the connection\n");
+	break;
+    } else {
+        printf("server received %d bytes: %s", n, buf);
+    }
+
+    if ( strcmp ( buf , DIR_FORWARD) == 0 ) {
+        printf("DIRECTION --> FORWARD\n");
+    	ioctl ( motor , PI_CMD_FORWARD ) ;
+    } else if ( strcmp ( buf , DIR_LEFT) == 0 ) {
+        printf("DIRECTION --> LEFT\n");
+	ioctl ( motor , PI_CMD_LEFT ) ;
+    } else if ( strcmp ( buf , DIR_RIGHT) == 0 ) {
+        printf("DIRECTION --> RIGHT\n");
+	ioctl ( motor , PI_CMD_RIGHT ) ;
+    } else if ( strcmp ( buf , DIR_BACKWARD) == 0 ) {
+        printf("DIRECTION --> BACKWARD\n");
+	ioctl ( motor , PI_CMD_BACKWARD ) ;
+    } else if ( strcmp ( buf , DIR_TERMINATION) == 0 ) {
+        printf("DIRECTION --> TERMINATION\n");
+	ioctl ( motor , PI_CMD_STOP ) ;
+    } else {
+        printf("DEFAULT DIRECTION --> STOP\n");
+	ioctl ( motor , PI_CMD_STOP ) ;
+    }
   }
     close(childfd);
 }
