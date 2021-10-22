@@ -110,21 +110,18 @@ int main(int argc, char **argv) {
 
     bzero(buf, CMD_LEN);
 
-    while ( n < CMD_LEN) {
-    	recvSize = read(childfd, buf, CMD_LEN - n);
-	n += recvSize;
-    }
+    recvSize = read(childfd, buf, CMD_LEN );
 
-    if (n < 0) {
+    if (recvSize < 0) {
       error("ERROR reading from socket");
     }
 
-    if ( n == 0 ) {
+    if ( recvSize < 5 ) {
+        printf("server received %d bytes: %s", recvSize , buf);
     	printf("We have lost the connection\n");
 	break;
-    } else {
-        printf("server received %d bytes: %s", n, buf);
     }
+        printf("server received %d bytes: %s", recvSize , buf);
 
     if ( strncmp ( buf , DIR_FORWARD , CMP_LEN) == 0 ) {
         printf("DIRECTION --> FORWARD\n");

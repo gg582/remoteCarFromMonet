@@ -1,3 +1,3 @@
 #!/bin/bash
-(cd ../car/driver/; insmod ./motor.ko; insmod ./sr04.ko ; insmod ./ir.ko)
+(cd ../car/driver/; insmod ./sr04.ko ; insmod ./ir.ko ; insmod ./motor.ko )
 

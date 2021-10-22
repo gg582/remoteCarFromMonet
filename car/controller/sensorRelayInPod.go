@@ -4,41 +4,34 @@ import (
 		"net"
 		"log"
 		"bytes"
-		"fmt"
-		"os"
+		"time"
+		"syscall"
 		"encoding/binary"
 		"encoding/json"
 		"bufio"
-		"time"
+		"os"
 	   )
 
 type Cartype struct {
-
 		Sr04Val uint32
-
 		IrLeftVal  uint32
-
 		IrRightVal  uint32
-
 }
 
 const (
 	DEV_SR04 = "/dev/car/sr04_tun"
-	DEV_IR0  = "/dev/car/left_ir_tun"
-	DEV_IR1  = "/dev/car/right_ir_tun"
+	DEV_IR_LEFT  = "/dev/car/left_ir_tun"
+	DEV_IR_RIGHT  = "/dev/car/right_ir_tun"
 )
 
-var devNames []string = []string { DEV_SR04, DEV_IR0, DEV_IR1 }
+var devNames []string = []string { DEV_SR04, DEV_IR_LEFT, DEV_IR_RIGHT }
 
-var devFiles		map[string]*os.File		 = map[string]*os.File {	 DEV_SR04: nil, DEV_IR0: nil, DEV_IR1: nil, }
-var devWriters		map[string]*bufio.Writer		 = map[string]*bufio.Writer {	 DEV_SR04: nil, DEV_IR0: nil, DEV_IR1: nil, }
-var devBuffer	map[string]*bytes.Buffer = map[string]*bytes.Buffer{ DEV_SR04: new (bytes.Buffer), DEV_IR0: new (bytes.Buffer), DEV_IR1: new (bytes.Buffer), }
-var devValue    map[string]uint32		 = map[string]uint32{ DEV_SR04: 0, DEV_IR0: 0, DEV_IR1: 0, }
+var devFds		map[string]int	 = map[string]int {	 DEV_SR04: 0, DEV_IR_LEFT: 0, DEV_IR_RIGHT: 0 }
+var devBuffer	map[string]*bytes.Buffer = map[string]*bytes.Buffer{ DEV_SR04: new (bytes.Buffer), DEV_IR_LEFT: new (bytes.Buffer), DEV_IR_RIGHT: new (bytes.Buffer), }
+var devValue    map[string]uint32		 = map[string]uint32{ DEV_SR04: 0, DEV_IR_LEFT: 0, DEV_IR_RIGHT: 0, }
 
 func main () {
 
-	var conn net.Conn
-	var err error
 
 	arguments := os.Args
 
@@ -49,10 +42,14 @@ func main () {
 		return
    }
 
+	var conn net.Conn
+	var err error
 
 	for {
 
 		conn , err = net.Dial ( "tcp" , arguments [ 1 ] + ":10101"  )
+
+		time.Sleep ( time.Second )
 
 		if err == nil {
 			println ( "TCP connection established" )
@@ -60,108 +57,70 @@ func main () {
 		} else {
 			println ( "Waiting for TCP connection establishment" )
 		}
-
-		time.Sleep ( time.Second )
 	}
 
 	println ( "TCP connected" )
 
 
 	for _, name := range devNames {
-			devFiles [name] = openFile ( name )
-			defer devFiles[name].Close ()
-			devWriters [ name ] = bufio.NewWriter ( devFiles [ name ] )
+			devFds [name] = openFile ( name )
 	}
 
-
-	setSensorValue ( conn , devWriters ,devBuffer , devValue )
-
-
+	setSensorValue (conn)
 }
 
-func setSensorValue (conn net.Conn , devWriters map[string]*bufio.Writer , devBuffer map[string]*bytes.Buffer , devValue map[string]uint32 ) {
+func setSensorValue (conn net.Conn) {
 
-	var car Cartype
 
 	for {
-		car = getSensorValue ( conn )
+			var car Cartype = getSensorValue ( conn )
 
-		fmt.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
-		fmt.Printf ( "/dev/car/ir_left --> %d\n" , car.IrLeftVal )
-		fmt.Printf ( "/dev/car/ir_right --> %d\n" , car.IrRightVal )
+
+
+		log.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
+		log.Printf ( "/dev/car/ir_left --> %d\n" , car.IrLeftVal )
+		log.Printf ( "/dev/car/ir_right --> %d\n" , car.IrRightVal )
 
 		devValue [DEV_SR04] = car.Sr04Val
-		devValue [DEV_IR0 ] = car.IrLeftVal
-		devValue [DEV_IR1 ] = car.IrRightVal
+		devValue [DEV_IR_LEFT ] = car.IrLeftVal
+		devValue [DEV_IR_RIGHT ] = car.IrRightVal
 
-		writeBytes := make ( []byte , 4 )
-
-		for _ , name := range devNames {
-
-
-			binary.LittleEndian.PutUint32 ( writeBytes , devValue [ name ] )
-
-
-			_ , err := devWriters[name].Write( writeBytes )
-			if err != nil {
-
-				log.Println ( err )
-				break
-
-			}
+		for _, name := range devNames {
+			err := binary.Write (  devBuffer [name] , binary.LittleEndian , devValue [name])
+			manageError ( err )
+			_ , err = syscall.Write ( devFds[name] , devBuffer [name].Bytes () )
+			manageError ( err )
 		}
-		conn.Write ( []byte ( "success\n" ) ) 
 	}
 }
 
-func openFile ( name string) *os.File {
-	fd , err :=			os.OpenFile (  name , os.O_RDWR , 0775 )
-
-	handleError ( err )
-
-	return fd
+func openFile ( name string) int {
+	fd , err :=			syscall.Open (  name, syscall.O_RDWR , 0775 )
+	manageError ( err )
+	return fd;
 }
 
 func getSensorValue ( conn net.Conn ) Cartype {
 
 	var car Cartype
 
-	conReader :=  bufio.NewReader ( conn )
+	conReader := bufio.NewReader ( conn )
 
-	buf , err := conReader.ReadBytes ( byte ( '\n' ) )
+	buf , _ := conReader.ReadBytes ( '\n' )
 
+	buf = bytes.Trim ( buf , "\x00" )
 
 	println ( string ( buf ) )
-	buf = bytes.Trim ( buf , "\n" )
-	err = json.Unmarshal ( buf , & car )
 
-	if err != nil {
-		log.Println ( "Unmarshal error" )
-	}
-
+	json.Unmarshal ( buf , &car )
 
 	return car
-
 }
-
 
 func manageError ( err error ) {
-
 	if ( err != nil ) {
-
 		log.Println( err )
-
 	}
-
 }
 
-func handleError ( err error ) {
-
-	if ( err != nil ) {
-
-		log.Fatal( err )
-
-	}
-
-}
 

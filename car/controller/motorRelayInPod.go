@@ -4,7 +4,6 @@ import (
 		"os"
 		"time"
 		"log"
-		"bufio"
 		"net"
 		"fmt"
 	   )
@@ -60,13 +59,11 @@ func run ( connWriter net.Conn ) {
 
 	handleError ( err )
 
-	motorReader := bufio.NewReader ( motorFile ) 
-
 	cmdBytes = make ( []byte , 5 ) 
 
 	for {
 
-		cmdBytes , err = motorReader.ReadBytes ( byte ( '\n' ) )
+		_ , err = motorFile.Read ( cmdBytes )
 
 		if err != nil {
 			log.Println ( err ) 

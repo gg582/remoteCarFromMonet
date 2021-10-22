@@ -1,3 +1,3 @@
 #!/bin/bash
-(rmmod motor.ko; rmmod sr04.ko)
+(rmmod ir.ko; rmmod sr04.ko;rmmod motor.ko)
 
