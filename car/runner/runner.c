@@ -14,9 +14,9 @@
 
 #include <ioctl_car_cmd.h>
 
-#define AVOID_DIST 80
+#define AVOID_DIST 60
 #define MOVE_TIME	1
-#define SLEEP_TIME	300
+#define SLEEP_TIME	200
 #define ONE_MILI_SEC	1000	
 
 int dev ;
@@ -75,11 +75,13 @@ int main () {
 			if ( ir0 && ir1 ) {
 
 					ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
+					usleep ( SLEEP_TIME * ONE_MILI_SEC *1.5 ) ;
+					ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info )) ;
+
 					usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
+					printf ("right --> (%u)\n", value);
 
 			} else if ( ir0 ) {
-				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
-				usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 
 				ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info )) ;
 
@@ -88,14 +90,16 @@ int main () {
 
 			} else if ( ir1 ) {
 			
-				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
-				usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 				ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info ) );
 
 				usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 
 				printf ("left --> (%u)\n", value);
 			} else {
+
+				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
+				usleep ( SLEEP_TIME * ONE_MILI_SEC *1.5 ) ;
+
 
 				if ( rand () % 2 ) {
 					
