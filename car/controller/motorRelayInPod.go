@@ -5,7 +5,6 @@ import (
 		"time"
 		"log"
 		"net"
-		"fmt"
 	   )
 
 const PORT		= ":10102"
@@ -35,7 +34,7 @@ func main () {
 		connWriter , err = net.Dial ( PROTOCOL , arguments [ 1 ] + PORT )
 
 			if err != nil {
-				println ( "waiting for TCP Connection Establishment" )
+				log.Println ( "waiting for TCP Connection Establishment" )
 			} else {
 				break
 			}
@@ -75,7 +74,7 @@ func run ( connWriter net.Conn ) {
 
 		}
 
-		fmt.Println ("Received cmd:", string ( cmdBytes ) )
+		log.Println ("Received cmd:", string ( cmdBytes ) )
 
 		if err != nil {
 			log.Println ( err )
@@ -85,7 +84,7 @@ func run ( connWriter net.Conn ) {
 		_ , err = connWriter.Write ( cmdBytes )
 
 		if err != nil {
-			println ( "Connection Broken" )
+			log.Println ( "Connection Broken" )
 		}
 	
 

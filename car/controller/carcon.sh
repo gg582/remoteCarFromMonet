@@ -1,2 +1,2 @@
 #!/bin/bash
-source ../../conf-exec.sh ; ../runner/runner
+source /home/pi/remote-car/conf-exec.sh ; /home/pi/remote-car/car/runner/runner 

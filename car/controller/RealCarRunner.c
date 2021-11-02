@@ -117,29 +117,29 @@ int main(int argc, char **argv) {
     }
 
     if ( recvSize < 5 ) {
-        printf("server received %d bytes: %s", recvSize , buf);
-    	printf("We have lost the connection\n");
+        fprintf(stderr,"server received %d bytes: %s", recvSize , buf);
+    	fprintf(stderr,"We have lost the connection\n");
 	break;
     }
-        printf("server received %d bytes: %s", recvSize , buf);
+        fprintf(stderr,"server received %d bytes: %s", recvSize , buf);
 
     if ( strncmp ( buf , DIR_FORWARD , CMP_LEN) == 0 ) {
-        printf("DIRECTION --> FORWARD\n");
+        fprintf(stderr,"DIRECTION --> FORWARD\n");
     	ioctl ( motor , PI_CMD_FORWARD) ;
     } else if ( strncmp ( buf , DIR_LEFT , CMP_LEN) == 0 ) {
-        printf("DIRECTION --> LEFT\n");
+        fprintf(stderr,"DIRECTION --> LEFT\n");
 	ioctl ( motor , PI_CMD_LEFT) ;
     } else if ( strncmp ( buf , DIR_RIGHT,CMP_LEN) == 0 ) {
-        printf("DIRECTION --> RIGHT\n");
+        fprintf(stderr,"DIRECTION --> RIGHT\n");
 	ioctl ( motor , PI_CMD_RIGHT ) ;
     } else if ( strncmp ( buf , DIR_BACKWARD,CMP_LEN) == 0 ) {
-        printf("DIRECTION --> BACKWARD\n");
+        fprintf(stderr,"DIRECTION --> BACKWARD\n");
 	ioctl ( motor , PI_CMD_BACKWARD) ;
     } else if ( strncmp ( buf , DIR_TERMINATION, CMP_LEN) == 0 ) {
-        printf("DIRECTION --> TERMINATION\n");
+        fprintf(stderr,"DIRECTION --> TERMINATION\n");
 	ioctl ( motor , PI_CMD_STOP) ;
     } else {
-        printf("DEFAULT DIRECTION --> STOP\n");
+        fprintf(stderr,"DEFAULT DIRECTION --> STOP\n");
 	ioctl ( motor , PI_CMD_STOP) ;
     }
   }

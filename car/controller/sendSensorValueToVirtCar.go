@@ -2,10 +2,11 @@ package main
 
 import (
 	"net"
+	"os"
 	"encoding/binary"
 	"time"
 	"encoding/json"
-	"syscall"
+	"bufio"
 	"log"
 )
 
@@ -13,6 +14,7 @@ type Cartype struct {
 	Sr04Val uint32
 	IrLeftVal uint32
 	IrRightVal uint32
+	TimeStamp  uint32
 
 }
 
@@ -23,10 +25,11 @@ const (
 )
 var	devName []string = []string{ SR04_DEV , IR0_DEV , IR1_DEV }
 
-var	devFd map[string]int = map[string]int { SR04_DEV : 0 , IR0_DEV : 0 , IR1_DEV : 0 }
+var	devFile map[string](*os.File) = map[string](*os.File) { SR04_DEV : nil , IR0_DEV : nil , IR1_DEV : nil }
 
 var	devByte map[string]([]byte) = map[string]([]byte) { SR04_DEV : make ( []byte , 4 ) , IR0_DEV : make ( []byte , 4 ) , IR1_DEV : make ( []byte , 4 ) }
 
+var	devReader map[string](*bufio.Reader) = map[string](*bufio.Reader ) { SR04_DEV :  nil, IR0_DEV : nil , IR1_DEV : nil }
 
 
 func main () {
@@ -54,7 +57,8 @@ func READ ( uport net.Conn ) {
 
 	for _ , name := range devName {
 
-		devFd [ name ], err = syscall.Open ( name , syscall.O_RDONLY , 0775 )
+		devFile [ name ], err = os.OpenFile ( name , os.O_RDONLY , 0775 )
+		defer devFile [ name ].Close ()
 
 		if err != nil {
 
@@ -63,16 +67,15 @@ func READ ( uport net.Conn ) {
 		}
 		
 
+		devReader [ name ] = bufio.NewReader ( devFile [ name ] )
 	}
 
 	var car Cartype
 
 	for {
 
-		time.Sleep ( time.Millisecond * 300 ) 
-
 		for i , name := range devName {
-			_ , err = syscall.Read ( devFd [ name ] , devByte [ name ] )
+			_ , err = devReader [ name ].Read (devByte [ name ] )
 
 			if err != nil && len ( devByte [ name ] ) < 4 {
 				for i := 0 ; i < 4 ; i ++ {
@@ -87,7 +90,44 @@ func READ ( uport net.Conn ) {
 
 			case 0 :
 
-				car.Sr04Val = binary.LittleEndian.Uint32 ( devByte [ name ] )
+				for {
+
+					_ , err = devReader [ name ].Read ( devByte [ name ] )
+
+					if err != nil || len ( devByte [ name ] ) < 4 {
+
+						for r := 0 ; r < 4 ; r ++ {
+
+							 devByte [ name ] = append (  devByte [ name ] , 0 )
+
+						}
+
+					}
+
+
+
+					car.Sr04Val = binary.LittleEndian.Uint32 ( devByte [ name ] )
+
+					for x := 1 ; x <= 2 ; x ++ {
+						_ , err = devReader [ devName [ x ] ].Read ( devByte [ devName [ x ] ] )
+						if err != nil || len ( devByte [ devName [ x ] ] ) < 4 {
+
+							for r := 0 ; r < 4 ; r ++ {
+
+								 devByte [ devName [ x ] ] = append (  devByte [ devName  [ x ]] , 0 )
+
+							}
+
+						}
+
+					}
+					if car.Sr04Val != 0 {
+						break
+					}
+
+				}
+				car.IrLeftVal = binary.LittleEndian.Uint32 ( devByte [ devName [ 0 ] ] )
+				car.IrRightVal = binary.LittleEndian.Uint32 ( devByte [ devName [ 1 ] ] )
 
 			case 1 :
 
@@ -113,6 +153,11 @@ func READ ( uport net.Conn ) {
 
 		}
 
+		timeStr := time.Now ()
+		
+		TStamp := timeStr.UnixNano ()
+
+		car.TimeStamp = uint32 ( TStamp )
 
 		byte1 , err := json.Marshal ( & car )
 
@@ -127,6 +172,16 @@ func READ ( uport net.Conn ) {
 		log.Printf ( "sr04:%d ir_left:%d ir_right:%d \n" , car.Sr04Val , car.IrLeftVal , car.IrRightVal )
 
 		_ , err = uport.Write ( byte1 )
+
+
+
+		log.Println ( string ( byte1 ) , len ( byte1 ) )
+
+		message := make ( []byte , 8 )
+
+		_ , _ = uport.Read ( message )
+		
+		log.Println ( string ( message ) )
 
 
 

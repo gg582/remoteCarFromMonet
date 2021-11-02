@@ -13,9 +13,10 @@ import (
 	   )
 
 type Cartype struct {
-		Sr04Val uint32
-		IrLeftVal  uint32
+		Sr04Val		uint32
+		IrLeftVal   uint32
 		IrRightVal  uint32
+		TimeStamp	uint32
 }
 
 const (
@@ -52,14 +53,14 @@ func main () {
 		time.Sleep ( time.Second )
 
 		if err == nil {
-			println ( "TCP connection established" )
+			log.Println ( "TCP connection established" )
 			break
 		} else {
-			println ( "Waiting for TCP connection establishment" )
+			log.Println ( "Waiting for TCP connection establishment" )
 		}
 	}
 
-	println ( "TCP connected" )
+	log.Println ( "TCP connected" )
 
 
 	for _, name := range devNames {
@@ -84,6 +85,13 @@ func setSensorValue (conn net.Conn) {
 		devValue [DEV_SR04] = car.Sr04Val
 		devValue [DEV_IR_LEFT ] = car.IrLeftVal
 		devValue [DEV_IR_RIGHT ] = car.IrRightVal
+
+		oldTS := car.TimeStamp
+		NewTSNow := time.Now ()
+
+		NewTS := uint32 ( NewTSNow.UnixNano () )
+
+		log.Printf ( "Delay : %d \n " , NewTS - oldTS ) 
 
 		for _, name := range devNames {
 			err := binary.Write (  devBuffer [name] , binary.LittleEndian , devValue [name])
@@ -110,7 +118,7 @@ func getSensorValue ( conn net.Conn ) Cartype {
 
 	buf = bytes.Trim ( buf , "\x00" )
 
-	println ( string ( buf ) )
+	log.Println ( string ( buf ) )
 
 	json.Unmarshal ( buf , &car )
 
