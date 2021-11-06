@@ -1,2 +1,7 @@
 #!/bin/bash
-source /home/pi/remote-car/conf-exec.sh ;exec /home/pi/remote-car/car/controller/sendSensorValueToVirtCar & exec /home/pi/remote-car/car/controller/RealCarRunner &
+
+echo "In real car, RealCarRunner begins."
+/home/pi/remote-car/car/controller/RealCarRunner &
+
+echo "In real car, sendSensorValue begins."
+/home/pi/remote-car/car/controller/sendSensorValueToVirtCar &

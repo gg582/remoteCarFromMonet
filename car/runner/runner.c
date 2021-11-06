@@ -16,7 +16,8 @@
 
 #define AVOID_DIST 60
 #define MOVE_TIME	1
-#define SLEEP_TIME	200
+#define SLEEP_TIME	100
+#define TURN_SLEEP_TIME	(100*3)
 #define ONE_MILI_SEC	1000	
 
 int dev ;
@@ -31,7 +32,9 @@ int main () {
 	int sr04 ; 
 	int ir [ 2 ] ;
 	int ret ;
-	u_int32_t value , ir0 , ir1 ;
+	u_int32_t value , irLeft , irRight ;
+
+	puts ( "Runner begins" ) ;
 
 	dev = open ( DEVNAME , O_RDWR ) ;
 	ir [ 0 ] = open ( IR0 , O_RDONLY ) ;
@@ -47,7 +50,6 @@ int main () {
 
 	while ( true ) {
 
-
 		ret = read ( sr04 , &value , sizeof ( u_int32_t ) ) ;
 
 		if ( ret < 0 ) {
@@ -55,77 +57,41 @@ int main () {
 			continue;
 		}
 
+		ret = read ( ir [ 0 ]  , &irLeft , sizeof ( u_int32_t ) ) ;
 
-		ret = read ( ir [ 0 ]  , &ir0 , sizeof ( u_int32_t ) ) ;
+		if ( ret < 0 ) { irLeft = 0; }
 
-		if ( ret < 0 ) {
-			ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
-			continue;
-		}
+		ret = read ( ir [ 1 ] , &irRight , sizeof ( u_int32_t ) ) ;
 
-		ret = read ( ir [ 1 ] , &ir1 , sizeof ( u_int32_t ) ) ;
-
-		if ( ret < 0 ) {
-			ioctl ( dev , PI_CMD_STOP, sizeof ( struct ioctl_info ) );
-			continue;
-		}
+		if ( ret < 0 ) { irRight = 0; }
 
 		if ( value < AVOID_DIST ) {
 
-			if ( ir0 && ir1 ) {
+			if ( irLeft && irRight ) {
 
-					ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
-					usleep ( SLEEP_TIME * ONE_MILI_SEC *1.5 ) ;
-					ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info )) ;
+				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
+				usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
+				printf ("backward --> (%u)\n", value);
 
-					usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
-					printf ("right --> (%u)\n", value);
-
-			} else if ( ir0 ) {
-
+			} else if ( irLeft ) {
 				ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info )) ;
-
 				usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 				printf ("right --> (%u)\n", value);
 
-			} else if ( ir1 ) {
-			
+			} else if ( irRight ) {
 				ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info ) );
-
 				usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
-
 				printf ("left --> (%u)\n", value);
-			} else {
-
-				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
-				usleep ( SLEEP_TIME * ONE_MILI_SEC *1.5 ) ;
-
-
-				if ( rand () % 2 ) {
-					
-					ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info ) );
-
-					usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
-
-				} else {
-
-					ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info ) );
-
-					usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
-
-
-				}
 			}
 
+			
+
 		} else {
-
+			printf ("forward --> (%u)\n", value);
 			ioctl ( dev , PI_CMD_FORWARD , sizeof ( struct ioctl_info ) );
-
-			usleep ( SLEEP_TIME * ONE_MILI_SEC ) ;
 		}
 		
 	}
-
 
 	close ( sr04 ) ;
 	close ( ir [ 0 ] ) ;

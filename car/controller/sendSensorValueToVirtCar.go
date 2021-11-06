@@ -7,7 +7,7 @@ import (
 	"time"
 	"encoding/json"
 	"bufio"
-	"log"
+	"fmt"
 )
 
 type Cartype struct {
@@ -62,7 +62,7 @@ func READ ( uport net.Conn ) {
 
 		if err != nil {
 
-			log.Println ( err )
+			fmt.Println ( err )
 
 		}
 		
@@ -109,7 +109,9 @@ func READ ( uport net.Conn ) {
 					car.Sr04Val = binary.LittleEndian.Uint32 ( devByte [ name ] )
 
 					for x := 1 ; x <= 2 ; x ++ {
+
 						_ , err = devReader [ devName [ x ] ].Read ( devByte [ devName [ x ] ] )
+
 						if err != nil || len ( devByte [ devName [ x ] ] ) < 4 {
 
 							for r := 0 ; r < 4 ; r ++ {
@@ -121,12 +123,16 @@ func READ ( uport net.Conn ) {
 						}
 
 					}
+
 					if car.Sr04Val != 0 {
+
 						break
 					}
 
 				}
+
 				car.IrLeftVal = binary.LittleEndian.Uint32 ( devByte [ devName [ 0 ] ] )
+
 				car.IrRightVal = binary.LittleEndian.Uint32 ( devByte [ devName [ 1 ] ] )
 
 			case 1 :
@@ -135,7 +141,7 @@ func READ ( uport net.Conn ) {
 
 				if car.IrLeftVal > 1 {
 
-					car.IrLeftVal = 1 
+					car.IrLeftVal = 1
 
 				}
 
@@ -154,7 +160,7 @@ func READ ( uport net.Conn ) {
 		}
 
 		timeStr := time.Now ()
-		
+
 		TStamp := timeStr.UnixNano ()
 
 		car.TimeStamp = uint32 ( TStamp )
@@ -169,22 +175,11 @@ func READ ( uport net.Conn ) {
 
 		byte1 = append ( byte1 , byte ( '\n' ) )
 
-		log.Printf ( "sr04:%d ir_left:%d ir_right:%d \n" , car.Sr04Val , car.IrLeftVal , car.IrRightVal )
+		fmt.Printf ( "sr04:%d ir_left:%d ir_right:%d \n" , car.Sr04Val , car.IrLeftVal , car.IrRightVal )
 
 		_ , err = uport.Write ( byte1 )
 
-
-
-		log.Println ( string ( byte1 ) , len ( byte1 ) )
-
-		message := make ( []byte , 8 )
-
-		_ , _ = uport.Read ( message )
-		
-		log.Println ( string ( message ) )
-
-
-
+		time.Sleep ( time.Millisecond * 100 )
 	}
 }
 

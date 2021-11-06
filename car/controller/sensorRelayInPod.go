@@ -2,7 +2,7 @@ package main
 
 import (
 		"net"
-		"log"
+		"fmt"
 		"bytes"
 		"time"
 		"syscall"
@@ -13,32 +13,37 @@ import (
 	   )
 
 type Cartype struct {
-		Sr04Val		uint32
+		Sr04Val	    uint32
 		IrLeftVal   uint32
 		IrRightVal  uint32
-		TimeStamp	uint32
+		TimeStamp   uint32
 }
 
 const (
 	DEV_SR04 = "/dev/car/sr04_tun"
 	DEV_IR_LEFT  = "/dev/car/left_ir_tun"
 	DEV_IR_RIGHT  = "/dev/car/right_ir_tun"
+	PORT = ":10102"
 )
 
 var devNames []string = []string { DEV_SR04, DEV_IR_LEFT, DEV_IR_RIGHT }
 
-var devFds		map[string]int	 = map[string]int {	 DEV_SR04: 0, DEV_IR_LEFT: 0, DEV_IR_RIGHT: 0 }
-var devBuffer	map[string]*bytes.Buffer = map[string]*bytes.Buffer{ DEV_SR04: new (bytes.Buffer), DEV_IR_LEFT: new (bytes.Buffer), DEV_IR_RIGHT: new (bytes.Buffer), }
-var devValue    map[string]uint32		 = map[string]uint32{ DEV_SR04: 0, DEV_IR_LEFT: 0, DEV_IR_RIGHT: 0, }
+var devFds	map[string]int	 = map[string]int { DEV_SR04: 0, DEV_IR_LEFT: 0, DEV_IR_RIGHT: 0 }
+
+var devBuffer	map[string]*bytes.Buffer = map[string]*bytes.Buffer{	DEV_SR04: new (bytes.Buffer),
+									DEV_IR_LEFT: new (bytes.Buffer),
+									DEV_IR_RIGHT: new (bytes.Buffer),
+								   }
+
+var devValue    map[string]uint32 = map[string]uint32{ DEV_SR04: 0, DEV_IR_LEFT: 0, DEV_IR_RIGHT: 0, }
 
 func main () {
-
 
 	arguments := os.Args
 
 	if len ( arguments ) < 2 {
 
-		log.Println ( "Please provide IP" )
+		fmt.Println ( "Please provide IP" )
 
 		return
    }
@@ -48,39 +53,35 @@ func main () {
 
 	for {
 
+		fmt.Println ( "TCP connection trial(sensor): ", arguments [ 1 ] + PORT )
 		conn , err = net.Dial ( "tcp" , arguments [ 1 ] + ":10101"  )
 
-		time.Sleep ( time.Second )
 
-		if err == nil {
-			log.Println ( "TCP connection established" )
-			break
+		if err != nil {
+			continue
 		} else {
-			log.Println ( "Waiting for TCP connection establishment" )
+			fmt.Println ( "Success(sensor): TCP connection establishment" )
+			break
 		}
+
+		time.Sleep ( time.Second )
 	}
-
-	log.Println ( "TCP connected" )
-
 
 	for _, name := range devNames {
-			devFds [name] = openFile ( name )
+		devFds [name] = openFile ( name )
 	}
 
-	setSensorValue (conn)
+	setSensorValue (conn )
 }
 
-func setSensorValue (conn net.Conn) {
-
+func setSensorValue (conn net.Conn ) {
 
 	for {
-			var car Cartype = getSensorValue ( conn )
+		car := getSensorValue ( conn )
 
-
-
-		log.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
-		log.Printf ( "/dev/car/ir_left --> %d\n" , car.IrLeftVal )
-		log.Printf ( "/dev/car/ir_right --> %d\n" , car.IrRightVal )
+		fmt.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
+		fmt.Printf ( "/dev/car/ir_left --> %d\n" , car.IrLeftVal )
+		fmt.Printf ( "/dev/car/ir_right --> %d\n" , car.IrRightVal )
 
 		devValue [DEV_SR04] = car.Sr04Val
 		devValue [DEV_IR_LEFT ] = car.IrLeftVal
@@ -91,21 +92,22 @@ func setSensorValue (conn net.Conn) {
 
 		NewTS := uint32 ( NewTSNow.UnixNano () )
 
-		log.Printf ( "Delay : %d \n " , NewTS - oldTS ) 
+		fmt.Printf ( "Delay : %v (sec) \n " , float64(( NewTS - oldTS ) / uint32 (100000000)) )
 
 		for _, name := range devNames {
 			err := binary.Write (  devBuffer [name] , binary.LittleEndian , devValue [name])
 			manageError ( err )
 			_ , err = syscall.Write ( devFds[name] , devBuffer [name].Bytes () )
+			devBuffer [ name ].Reset ()
 			manageError ( err )
 		}
 	}
 }
 
 func openFile ( name string) int {
-	fd , err :=			syscall.Open (  name, syscall.O_RDWR , 0775 )
+	fd , err := syscall.Open (  name, syscall.O_RDWR , 0775 )
 	manageError ( err )
-	return fd;
+	return fd
 }
 
 func getSensorValue ( conn net.Conn ) Cartype {
@@ -114,11 +116,11 @@ func getSensorValue ( conn net.Conn ) Cartype {
 
 	conReader := bufio.NewReader ( conn )
 
-	buf , _ := conReader.ReadBytes ( '\n' )
+	buf , _ := conReader.ReadBytes ( byte ( '\n' ) )
 
-	buf = bytes.Trim ( buf , "\x00" )
+	fmt.Println ( string ( buf ) )
 
-	log.Println ( string ( buf ) )
+	bytes.Trim ( buf , "\n" )
 
 	json.Unmarshal ( buf , &car )
 
@@ -127,7 +129,7 @@ func getSensorValue ( conn net.Conn ) Cartype {
 
 func manageError ( err error ) {
 	if ( err != nil ) {
-		log.Println( err )
+		fmt.Println( err )
 	}
 }
 

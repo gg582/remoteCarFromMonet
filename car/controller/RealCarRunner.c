@@ -22,126 +22,134 @@
 #define DIR_TERMINATION		"TERM"
 
 void error(char *msg) {
-  perror(msg);
-  exit(1);
+    perror(msg);
+    exit(1);
 }
 
 int main(int argc, char **argv) {
 
-  int parentfd; /* parent socket */
-  int childfd; /* child socket */
-  int portno; /* port to listen on */
-  int clientlen; /* byte size of client's address */
-  struct sockaddr_in serveraddr; /* server's addr */
-  struct sockaddr_in clientaddr; /* client addr */
-  struct hostent *hostp; /* client host info */
-  char buf[CMD_LEN]; /* message buffer */
-  char *hostaddrp; /* dotted decimal host addr string */
-  int optval; /* flag value for setsockopt */
+    int parentFd; /* parent socket */
+    int childFd; /* child socket */
+    int portNum; /* port to listen on */
+    unsigned int clientLen; /* byte size of client's address */
+    struct sockaddr_in serverAddr; /* server's addr */
+    struct sockaddr_in clientAddr; /* client addr */
+    char buf[CMD_LEN]; /* message buffer */
+    int optVal; /* flag value for setsockopt */
 
-  /* 
-   * check command line arguments 
-   */
-  portno = 10102 ;
+    printf ( "Car begins.\n" );
 
-  /* 
-   * socket: create the parent socket 
-   */
-  parentfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (parentfd < 0) 
-    error("ERROR opening socket");
+    /* 
+     * check command line arguments 
+     */
+    portNum = 10102 ;
 
-  /* setsockopt: Handy debugging trick that lets 
-   * us rerun the server immediately after we kill it; 
-   * otherwise we have to wait about 20 secs. 
-   * Eliminates "ERROR on binding: Address already in use" error. 
-   */
-  optval = 1;
+    /* 
+     * socket: create the parent socket 
+     */
+    parentFd = socket(AF_INET, SOCK_STREAM, 0);
+    if (parentFd < 0) {
 
-  setsockopt(parentfd, SOL_SOCKET, SO_REUSEADDR, 
-	     (const void *)&optval , sizeof(int));
+        error("ERROR opening socket");
+    }
 
-  /*
-   * build the server's Internet address
-   */
-  bzero((char *) &serveraddr, sizeof(serveraddr));
+    /* setsockopt: Handy debugging trick that lets 
+     * us rerun the server immediately after we kill it; 
+     * otherwise we have to wait about 20 secs. 
+     * Eliminates "ERROR on binding: Address already in use" error. 
+     */
+    optVal = 1;
 
-  /* this is an Internet address */
-  serveraddr.sin_family = AF_INET;
+    setsockopt(parentFd, SOL_SOCKET, SO_REUSEADDR, 
+	         (const void *)&optVal , sizeof(int));
 
-  /* let the system figure out our IP address */
-  serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    /*
+     * build the server's Internet address
+     */
+    bzero((char *) &serverAddr, sizeof(serverAddr));
 
-  /* this is the port we will listen on */
-  serveraddr.sin_port = htons((unsigned short)portno);
+    /* this is an Internet address */
+    serverAddr.sin_family = AF_INET;
 
-  /* 
-   * bind: associate the parent socket with a port 
-   */
-  if (bind(parentfd, (struct sockaddr *) &serveraddr, 
-	   sizeof(serveraddr)) < 0) 
-    error("ERROR on binding");
+    /* let the system figure out our IP address */
+    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-  /* 
-   * listen: make this socket ready to accept connection requests 
-   */
-  if (listen(parentfd, 5) < 0) /* allow 5 requests to queue up */ 
-    error("ERROR on listen");
+    /* this is the port we will listen on */
+    serverAddr.sin_port = htons((unsigned short)portNum);
 
-  /* 
-   * main loop: wait for a connection request, echo input line, 
-   * then close connection.
-   */
+    /* 
+     * bind: associate the parent socket with a port 
+     */
+    if (bind(parentFd, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
+        error("ERROR on binding");
+    }
 
-  clientlen = sizeof(clientaddr);
+    /* 
+     * listen: make this socket ready to accept connection requests 
+     */
 
-  childfd = accept(parentfd, (struct sockaddr *) &clientaddr, &clientlen);
+    printf ( "Waiting for connection\n" ) ;
 
+    if (listen(parentFd, 1) < 0) { /* allow 1 requests to queue up */ 
+        error("ERROR on listen");
+    }
 
-  if (childfd < 0) 
-    error("ERROR on accept");
+    /* 
+     * main loop: wait for a connection request, echo input line, 
+     * then close connection.
+     */
+
+    clientLen = sizeof(clientAddr);
+
+    childFd = accept(parentFd, (struct sockaddr *) &clientAddr, &clientLen);
+
+    if (childFd < 0) {
+        error("ERROR on accept");
+    }
  
-  int motor = open ( DEVNAME, O_RDWR ) ;
+    printf ( "Connection established\n" ) ;
 
-  while (true) {
+    int motor = open ( DEVNAME, O_RDWR ) ;
 
-    int recvSize = 0;
-    int n = 0;
+    while (true) {
 
-    bzero(buf, CMD_LEN);
+        int recvSize = 0;
 
-    recvSize = read(childfd, buf, CMD_LEN );
+        bzero(buf, CMD_LEN);
 
-    if (recvSize < 0) {
-      error("ERROR reading from socket");
+        recvSize = read (childFd, buf, CMD_LEN );
+
+        if (recvSize < 0) {
+            error("ERROR reading from socket");
+        }
+
+        if ( recvSize < 5 ) {
+                printf("server received %d bytes: %s", recvSize , buf);
+        	printf("We have lost the connection\n");
+		continue;
+        }
+
+        printf("server received %d bytes: %s", recvSize , buf);
+
+        if ( strncmp ( buf , DIR_FORWARD , CMP_LEN) == 0 ) {
+                printf("DIRECTION --> FORWARD\n");
+        	ioctl ( motor , PI_CMD_FORWARD) ;
+        } else if ( strncmp ( buf , DIR_LEFT , CMP_LEN) == 0 ) {
+                printf("DIRECTION --> LEFT\n");
+		ioctl ( motor , PI_CMD_LEFT) ;
+        } else if ( strncmp ( buf , DIR_RIGHT,CMP_LEN) == 0 ) {
+                printf("DIRECTION --> RIGHT\n");
+		ioctl ( motor , PI_CMD_RIGHT ) ;
+        } else if ( strncmp ( buf , DIR_BACKWARD,CMP_LEN) == 0 ) {
+                printf("DIRECTION --> BACKWARD\n");
+		ioctl ( motor , PI_CMD_BACKWARD) ;
+        } else if ( strncmp ( buf , DIR_TERMINATION, CMP_LEN) == 0 ) {
+                printf("DIRECTION --> TERMINATION\n");
+		ioctl ( motor , PI_CMD_STOP) ;
+        } else {
+                printf("DEFAULT DIRECTION --> STOP\n");
+		ioctl ( motor , PI_CMD_STOP) ;
+        }
     }
-
-    if ( recvSize < 5 ) {
-        fprintf(stderr,"server received %d bytes: %s", recvSize , buf);
-    	fprintf(stderr,"We have lost the connection\n");
-	break;
-    }
-        fprintf(stderr,"server received %d bytes: %s", recvSize , buf);
-
-    if ( strncmp ( buf , DIR_FORWARD , CMP_LEN) == 0 ) {
-        fprintf(stderr,"DIRECTION --> FORWARD\n");
-    	ioctl ( motor , PI_CMD_FORWARD) ;
-    } else if ( strncmp ( buf , DIR_LEFT , CMP_LEN) == 0 ) {
-        fprintf(stderr,"DIRECTION --> LEFT\n");
-	ioctl ( motor , PI_CMD_LEFT) ;
-    } else if ( strncmp ( buf , DIR_RIGHT,CMP_LEN) == 0 ) {
-        fprintf(stderr,"DIRECTION --> RIGHT\n");
-	ioctl ( motor , PI_CMD_RIGHT ) ;
-    } else if ( strncmp ( buf , DIR_BACKWARD,CMP_LEN) == 0 ) {
-        fprintf(stderr,"DIRECTION --> BACKWARD\n");
-	ioctl ( motor , PI_CMD_BACKWARD) ;
-    } else if ( strncmp ( buf , DIR_TERMINATION, CMP_LEN) == 0 ) {
-        fprintf(stderr,"DIRECTION --> TERMINATION\n");
-	ioctl ( motor , PI_CMD_STOP) ;
-    } else {
-        fprintf(stderr,"DEFAULT DIRECTION --> STOP\n");
-	ioctl ( motor , PI_CMD_STOP) ;
-    }
-  }
-    close(childfd);
+        close(childFd);
 }
