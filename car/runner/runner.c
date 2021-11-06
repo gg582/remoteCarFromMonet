@@ -84,10 +84,11 @@ int main () {
 				printf ("left --> (%u)\n", value);
 			}
 
-			
-
 		} else {
-			printf ("forward --> (%u)\n", value);
+			static int counter;
+			if ( !(counter++ % 10) ) {
+				printf ("forward --> (%u)\n", value);
+			}
 			ioctl ( dev , PI_CMD_FORWARD , sizeof ( struct ioctl_info ) );
 		}
 		

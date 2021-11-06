@@ -1,7 +1,7 @@
 #!/bin/bash
 source /home/pi/remote-car/conf-exec.sh
 
-echo "In carcon, runner begins."
+echo "In real car, runner begins."
 
 /home/pi/remote-car/car/runner/runner &
 

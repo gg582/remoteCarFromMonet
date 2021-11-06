@@ -23,7 +23,7 @@ const (
 	DEV_SR04 = "/dev/car/sr04_tun"
 	DEV_IR_LEFT  = "/dev/car/left_ir_tun"
 	DEV_IR_RIGHT  = "/dev/car/right_ir_tun"
-	PORT = ":10102"
+	PORT = ":10101"
 )
 
 var devNames []string = []string { DEV_SR04, DEV_IR_LEFT, DEV_IR_RIGHT }
