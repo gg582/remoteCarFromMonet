@@ -5,6 +5,7 @@ import (
 	"os"
 	"encoding/binary"
 	"time"
+	"reflect"
 	"encoding/json"
 	"bufio"
 	"fmt"
@@ -73,6 +74,7 @@ func READ ( uport net.Conn ) {
 	var car Cartype
 
 	for {
+		carPrev := car
 
 		for i , name := range devName {
 			_ , err = devReader [ name ].Read (devByte [ name ] )
@@ -90,50 +92,8 @@ func READ ( uport net.Conn ) {
 
 			case 0 :
 
-				for {
+				car.Sr04Val = binary.LittleEndian.Uint32 ( devByte [ name ] )
 
-					_ , err = devReader [ name ].Read ( devByte [ name ] )
-
-					if err != nil || len ( devByte [ name ] ) < 4 {
-
-						for r := 0 ; r < 4 ; r ++ {
-
-							 devByte [ name ] = append (  devByte [ name ] , 0 )
-
-						}
-
-					}
-
-
-
-					car.Sr04Val = binary.LittleEndian.Uint32 ( devByte [ name ] )
-
-					for x := 1 ; x <= 2 ; x ++ {
-
-						_ , err = devReader [ devName [ x ] ].Read ( devByte [ devName [ x ] ] )
-
-						if err != nil || len ( devByte [ devName [ x ] ] ) < 4 {
-
-							for r := 0 ; r < 4 ; r ++ {
-
-								 devByte [ devName [ x ] ] = append (  devByte [ devName  [ x ]] , 0 )
-
-							}
-
-						}
-
-					}
-
-					if car.Sr04Val != 0 {
-
-						break
-					}
-
-				}
-
-				car.IrLeftVal = binary.LittleEndian.Uint32 ( devByte [ devName [ 0 ] ] )
-
-				car.IrRightVal = binary.LittleEndian.Uint32 ( devByte [ devName [ 1 ] ] )
 
 			case 1 :
 
@@ -159,27 +119,27 @@ func READ ( uport net.Conn ) {
 
 		}
 
-		timeStr := time.Now ()
 
-		TStamp := timeStr.UnixNano ()
-
-		car.TimeStamp = uint32 ( TStamp )
+		
+		car.TimeStamp = time.Now().UnixNano ()
 
 		byte1 , err := json.Marshal ( & car )
 
 		if err != nil {
-
 			println ( "marshal error" )
-
 		}
 
 		byte1 = append ( byte1 , byte ( '\n' ) )
 
+		if car.Sr04Val == 0 {
+			continue
+		}
+		if reflect.DeepEqual ( carPrev , car ) == true {
+			continue
+		}
 		fmt.Printf ( "sr04:%d ir_left:%d ir_right:%d \n" , car.Sr04Val , car.IrLeftVal , car.IrRightVal )
-
 		_ , err = uport.Write ( byte1 )
 
-		time.Sleep ( time.Millisecond * 100 )
 	}
 }
 

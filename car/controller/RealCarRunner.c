@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <string.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <time.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -11,8 +13,9 @@
 #include <sys/ioctl.h>
 #include <stdbool.h>
 #include "../common/ioctl_car_cmd.h"
+int motor ;
 
-#define CMD_LEN 5
+#define CMD_LEN 100
 #define CMP_LEN 4
 #define DEVNAME 		"/dev/car/motor"
 #define DIR_FORWARD		"FWRD"
@@ -26,6 +29,13 @@ void error(char *msg) {
     exit(1);
 }
 
+void sigHandler ( int dummy ) {
+
+	ioctl ( motor , PI_CMD_STOP) ;
+	close ( motor ) ;
+	exit ( 0 ) ;
+	
+}
 int main(int argc, char **argv) {
 
     int parentFd; /* parent socket */
@@ -36,7 +46,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in clientAddr; /* client addr */
     char buf[CMD_LEN]; /* message buffer */
     int optVal; /* flag value for setsockopt */
-
+    signal ( SIGKILL , sigHandler ) ;
     printf ( "Car begins.\n" );
 
     /* 
@@ -109,43 +119,55 @@ int main(int argc, char **argv) {
  
     printf ( "Connection established\n" ) ;
 
-    int motor = open ( DEVNAME, O_RDWR ) ;
+    motor = open ( DEVNAME, O_RDWR ) ;
 
+    char cmd [ 5 ] ;
+    int recvSize ;
     while (true) {
 
-        int recvSize = 0;
 
         bzero(buf, CMD_LEN);
 
-        recvSize = read (childFd, buf, CMD_LEN );
+    	recvSize = read (childFd, buf,  CMD_LEN );
 
-        if (recvSize < 0) {
-            error("ERROR reading from socket");
-        }
+	if ( ( recvSize == 0) ) {
+		printf ( "ERROR on reading\n" );
+		exit ( 1 ) ;
+	}
 
-        if ( recvSize < 5 ) {
-                printf("server received %d bytes: %s", recvSize , buf);
-        	printf("We have lost the connection\n");
-		continue;
-        }
+	printf ( "received json string is : %s\n" ,  buf ) ;
+	char timestampGetString [ 95 ] ;
 
-        printf("server received %d bytes: %s", recvSize , buf);
+	u_int32_t timestampOld ;
 
-        if ( strncmp ( buf , DIR_FORWARD , CMP_LEN) == 0 ) {
+
+	sscanf ( buf ,  "{\"MotorBytes\":\"%[^\"]\",\"TimeStamp\":\"%u\"}\n%*[^\n]" , cmd , &timestampOld ) ;
+
+
+	struct timespec timeSPEC ;
+
+	clock_gettime ( CLOCK_MONOTONIC , &timeSPEC );
+
+	u_int32_t nsecTS = ( u_int32_t ) timeSPEC.tv_nsec ;
+	printf ( "time Delay : %u ( nsec ) \n" ,nsecTS - timestampOld);
+	printf ( "COMMAND from carcon : %s\n" , cmd ) ;
+
+	if ( strncmp ( cmd , DIR_FORWARD , CMP_LEN) == 0 ) {
                 printf("DIRECTION --> FORWARD\n");
         	ioctl ( motor , PI_CMD_FORWARD) ;
-        } else if ( strncmp ( buf , DIR_LEFT , CMP_LEN) == 0 ) {
+        } else if ( strncmp ( cmd , DIR_LEFT , CMP_LEN) == 0 ) {
                 printf("DIRECTION --> LEFT\n");
 		ioctl ( motor , PI_CMD_LEFT) ;
-        } else if ( strncmp ( buf , DIR_RIGHT,CMP_LEN) == 0 ) {
+        } else if ( strncmp ( cmd , DIR_RIGHT,CMP_LEN) == 0 ) {
                 printf("DIRECTION --> RIGHT\n");
 		ioctl ( motor , PI_CMD_RIGHT ) ;
-        } else if ( strncmp ( buf , DIR_BACKWARD,CMP_LEN) == 0 ) {
+        } else if ( strncmp ( cmd , DIR_BACKWARD,CMP_LEN) == 0 ) {
                 printf("DIRECTION --> BACKWARD\n");
 		ioctl ( motor , PI_CMD_BACKWARD) ;
-        } else if ( strncmp ( buf , DIR_TERMINATION, CMP_LEN) == 0 ) {
+        } else if ( strncmp ( cmd , DIR_TERMINATION, CMP_LEN) == 0 ) {
                 printf("DIRECTION --> TERMINATION\n");
 		ioctl ( motor , PI_CMD_STOP) ;
+		break;
         } else {
                 printf("DEFAULT DIRECTION --> STOP\n");
 		ioctl ( motor , PI_CMD_STOP) ;

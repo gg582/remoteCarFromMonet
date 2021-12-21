@@ -1,5 +1,5 @@
 
-CFLAGS = -O2 -I../common
+CFLAGS = -O2 -Wall -I../common
 
 SRCS = runner.c
 

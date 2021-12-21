@@ -3,6 +3,7 @@ package main
 import (
 		"net"
 		"fmt"
+		"log"
 		"bytes"
 		"time"
 		"syscall"
@@ -12,6 +13,7 @@ import (
 		"os"
 	   )
 
+
 type Cartype struct {
 		Sr04Val	    uint32
 		IrLeftVal   uint32
@@ -20,10 +22,11 @@ type Cartype struct {
 }
 
 const (
-	DEV_SR04 = "/dev/car/sr04_tun"
-	DEV_IR_LEFT  = "/dev/car/left_ir_tun"
-	DEV_IR_RIGHT  = "/dev/car/right_ir_tun"
-	PORT = ":10101"
+	DEV_SR04	= "/dev/car/sr04_tun"
+	DEV_IR_LEFT	= "/dev/car/left_ir_tun"
+	DEV_IR_RIGHT	= "/dev/car/right_ir_tun"
+	PORT		=":10101"
+	LOGNAME		="/home/pi/remote-car/tunnel_delay.log" 
 )
 
 var devNames []string = []string { DEV_SR04, DEV_IR_LEFT, DEV_IR_RIGHT }
@@ -34,6 +37,7 @@ var devBuffer	map[string]*bytes.Buffer = map[string]*bytes.Buffer{	DEV_SR04: new
 									DEV_IR_LEFT: new (bytes.Buffer),
 									DEV_IR_RIGHT: new (bytes.Buffer),
 								   }
+var car Cartype
 
 var devValue    map[string]uint32 = map[string]uint32{ DEV_SR04: 0, DEV_IR_LEFT: 0, DEV_IR_RIGHT: 0, }
 
@@ -71,33 +75,44 @@ func main () {
 		devFds [name] = openFile ( name )
 	}
 
-	setSensorValue (conn )
+	logFile , err := os.OpenFile (LOGNAME , os.O_RDWR , 0775 )
+
+	if err != nil {
+		log.Println ( "cannot write log" )
+	}
+
+	setSensorValue (conn , logFile )
 }
 
-func setSensorValue (conn net.Conn ) {
+func setSensorValue (conn net.Conn , logFile *os.File ) {
 
 	for {
-		car := getSensorValue ( conn )
+		car = getSensorValue ( conn , logFile )
 
 		fmt.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
 		fmt.Printf ( "/dev/car/ir_left --> %d\n" , car.IrLeftVal )
 		fmt.Printf ( "/dev/car/ir_right --> %d\n" , car.IrRightVal )
 
-		devValue [DEV_SR04] = car.Sr04Val
-		devValue [DEV_IR_LEFT ] = car.IrLeftVal
-		devValue [DEV_IR_RIGHT ] = car.IrRightVal
+		devValue [DEV_SR04	] = car.Sr04Val
+		devValue [DEV_IR_LEFT   ] = car.IrLeftVal
+		devValue [DEV_IR_RIGHT  ] = car.IrRightVal
 
 		oldTS := car.TimeStamp
-		NewTSNow := time.Now ()
 
-		NewTS := uint32 ( NewTSNow.UnixNano () )
+		NewTS := uint32 ( time.Now().UnixNano () )
 
-		fmt.Printf ( "Delay : %v (sec) \n " , float64(( NewTS - oldTS ) / uint32 (100000000)) )
+		fmt.Printf ( "Delay : %d (nsec) \n " , ( NewTS - oldTS ) )
 
 		for _, name := range devNames {
 			err := binary.Write (  devBuffer [name] , binary.LittleEndian , devValue [name])
 			manageError ( err )
+			newTunSENDTS := time.Now ().UnixNano ()
+			fmt.Fprintf ( logFile , "%s: %d\n" , name , newTunSENDTS )
+
+
 			_ , err = syscall.Write ( devFds[name] , devBuffer [name].Bytes () )
+
+
 			devBuffer [ name ].Reset ()
 			manageError ( err )
 		}
@@ -110,13 +125,19 @@ func openFile ( name string) int {
 	return fd
 }
 
-func getSensorValue ( conn net.Conn ) Cartype {
+func getSensorValue ( conn net.Conn , logFile *os.File ) Cartype {
 
 	var car Cartype
 
 	conReader := bufio.NewReader ( conn )
 
-	buf , _ := conReader.ReadBytes ( byte ( '\n' ) )
+	buf , err := conReader.ReadBytes ( byte ( '\n' ) )
+
+	 if err != nil {
+		log.Println ("Connection broken(sensor)")
+		os.Exit ( 1 )
+	}
+
 
 	fmt.Println ( string ( buf ) )
 
