@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdbool.h>
-#include <time.h>
+#include <sys/time.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -31,11 +31,11 @@ int ir [ 2 ] ;
 FILE * clockLog ;
 FILE * motorclockLog ;
 
-u_int32_t Clock () {
+int64_t Clock () {
 
-	struct timespec tsp;
-	clock_gettime ( CLOCK_MONOTONIC , &tsp );
-	return ( u_int32_t )tsp.tv_nsec;
+	struct timeval tsp;
+	gettimeofday ( &tsp , NULL ) ;
+	return ( int64_t )tsp.tv_usec ;
 
 }
 
@@ -49,7 +49,7 @@ void sigHandler ( int dummy ) {
 	close ( dev ) ;	
 
 	ioctl ( dev , PI_CMD_STOP , sizeof ( struct ioctl_info ) ) ;
-	fprintf ( motorclockLog , "/dev/car/motor: %u" , Clock () ) ; 
+	fprintf ( motorclockLog , "/dev/car/motor: %lld\n" , Clock () ) ; 
 	exit ( 0 ) ;
 }
 
@@ -76,12 +76,12 @@ int main () {
 	while ( true ) {
 		
 		read ( sr04 , &value , sizeof ( u_int32_t ) ) ;
-		u_int32_t tstamp=Clock () ;
- 		u_int32_t clockPrev = 0 ;
+		int64_t tstamp=Clock () ;
+ 		int64_t clockPrev = 0 ;
 
-		fscanf ( clockLog , "%*[^\n]/dev/car/sr04_tun: %u%*[^\n]" , &clockPrev ) ;
+		fscanf ( clockLog , "%*[^\n]/dev/car/sr04_tun: %lld%*[^\n]" , &clockPrev ) ;
 
-		printf ( "sr04_delay : %u\n" , tstamp - clockPrev );
+		printf ( "sr04_delay : %lld\n" , tstamp - clockPrev );
 
 
 		tstamp=Clock () ;
@@ -91,20 +91,20 @@ int main () {
 
 		read ( ir [ 0 ]  , &irLeft , sizeof ( u_int32_t ) ) ;
 
-		fscanf ( clockLog , "%*[^\n]/dev/car/left_ir_tun: %u%*[^\n]" , &clockPrev ) ;
+		fscanf ( clockLog , "%*[^\n]/dev/car/left_ir_tun: %lld%*[^\n]" , &clockPrev ) ;
 
 		tstamp=Clock () ;
-		printf ( "left_ir_delay : %u\n" , ( u_int32_t ) ( tstamp - clockPrev )  ) ;
+		printf ( "left_ir_delay : %lld\n" , (int64_t) ( tstamp - clockPrev )  ) ;
 
 
 
 
 		read ( ir [ 1 ] , &irRight , sizeof ( u_int32_t ) ) ;
-		fscanf ( clockLog , "%*[^\n]/dev/car/right_ir_tun: %u%*[^\n]" , &clockPrev ) ;
+		fscanf ( clockLog , "%*[^\n]/dev/car/right_ir_tun: %lld%*[^\n]" , &clockPrev ) ;
 
 		tstamp=Clock () ;
 
-		printf (  "right_ir_delay : %u\n" , ( u_int32_t ) ( tstamp - clockPrev )  ) ;
+		printf (  "right_ir_delay : %lld\n" , (int64_t) ( tstamp - clockPrev )  ) ;
 
 
 		if ( value < AVOID_DIST ) {
@@ -113,25 +113,25 @@ int main () {
 
 			if ( ( irLeft && irRight ) | ( value < BACK_DIST ) ) {
 				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
-				fprintf ( motorclockLog , "/dev/car/motor: %u" , Clock () ) ; 
+				fprintf ( motorclockLog , "/dev/car/motor: %lld\n" , Clock () ) ; 
 				printf ("backward --> (%u)\n", value) ;
 
 
 			} else if ( irLeft ) {
 				ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info )) ;
-				fprintf ( motorclockLog , "/dev/car/motor: %u" , Clock () ) ; 
+				fprintf ( motorclockLog , "/dev/car/motor: %lld\n" , Clock () ) ; 
 				printf ("right --> (%u)\n", value);
 
 			} else if ( irRight ) {
 				ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info ) );
-				fprintf ( motorclockLog , "/dev/car/motor: %u" , Clock () ) ; 
+				fprintf ( motorclockLog , "/dev/car/motor: %lld\n" , Clock () ) ; 
 				printf ("left --> (%u)\n", value);
 			} else if ( !value ) {
 				ioctl ( dev , PI_CMD_FORWARD ) ;	
-				fprintf ( motorclockLog , "/dev/car/motor: %u" , Clock () ) ; 
+				fprintf ( motorclockLog , "/dev/car/motor: %lld\n" , Clock () ) ; 
 			} else {
 					ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info ) );
-					fprintf ( motorclockLog , "/dev/car/motor: %u" , Clock () ) ; 
+					fprintf ( motorclockLog , "/dev/car/motor: %lld\n" , Clock () ) ; 
 					printf ("left ( predefined ) --> (%u)\n", value);
 			}
 
@@ -141,19 +141,19 @@ int main () {
 
 			if ( irLeft && irRight ) {
 				ioctl ( dev , PI_CMD_BACKWARD , sizeof ( struct ioctl_info ) );
-				fprintf ( motorclockLog , "/dev/car/motor: %u" , Clock () ) ; 
+				fprintf ( motorclockLog , "/dev/car/motor: %lld" , Clock () ) ; 
 				printf ("backward --> (%u)\n", value) ;
 
 
 			} else if ( irLeft) {
 				ioctl ( dev , PI_CMD_LEFT , sizeof ( struct ioctl_info )) ;
-				fprintf ( motorclockLog , "/dev/car/motor: %u" , Clock () ) ; 
+				fprintf ( motorclockLog , "/dev/car/motor: %lld" , Clock () ) ; 
 				printf ("left --> (%u)\n", value);
 
 			} else if ( irRight ) {
 
 				ioctl ( dev , PI_CMD_RIGHT , sizeof ( struct ioctl_info ) );
-				fprintf ( motorclockLog , "/dev/car/motor: %u" , Clock () ) ; 
+				fprintf ( motorclockLog , "/dev/car/motor: %lld" , Clock () ) ; 
 				printf ("right --> (%u)\n", value);
 			}
 			else {
@@ -161,7 +161,7 @@ int main () {
 					printf ("forward --> (%u)\n", value);
 				}
 			       	ioctl ( dev , PI_CMD_FORWARD , sizeof ( struct ioctl_info ) );
-				fprintf ( motorclockLog , "/dev/car/motor: %u" , Clock () ) ; 
+				fprintf ( motorclockLog , "/dev/car/motor: %lld\n" , Clock () ) ; 
 			}
 		
 		}

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <fcntl.h>
-#include <time.h>
+#include <sys/time.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -13,7 +13,6 @@
 #include <sys/ioctl.h>
 #include <stdbool.h>
 #include "../common/ioctl_car_cmd.h"
-int motor ;
 
 #define CMD_LEN 100
 #define CMP_LEN 4
@@ -28,6 +27,7 @@ void error(char *msg) {
     perror(msg);
     exit(1);
 }
+int motor ;
 
 void sigHandler ( int dummy ) {
 
@@ -35,6 +35,11 @@ void sigHandler ( int dummy ) {
 	close ( motor ) ;
 	exit ( 0 ) ;
 	
+}
+void Clock ( int64_t *val ) {
+	struct timeval tm;
+	gettimeofday ( &tm, NULL );
+	*val = tm.tv_usec ;
 }
 int main(int argc, char **argv) {
 
@@ -138,18 +143,14 @@ int main(int argc, char **argv) {
 	printf ( "received json string is : %s\n" ,  buf ) ;
 	char timestampGetString [ 95 ] ;
 
-	u_int32_t timestampOld ;
+	int64_t timestampOld , nsecTS;
 
 
 	sscanf ( buf ,  "{\"MotorBytes\":\"%[^\"]\",\"TimeStamp\":\"%u\"}\n%*[^\n]" , cmd , &timestampOld ) ;
 
+	Clock (&nsecTS);
 
-	struct timespec timeSPEC ;
-
-	clock_gettime ( CLOCK_MONOTONIC , &timeSPEC );
-
-	u_int32_t nsecTS = ( u_int32_t ) timeSPEC.tv_nsec ;
-	printf ( "time Delay : %u ( nsec ) \n" ,nsecTS - timestampOld);
+	printf ( "time Delay : %lld ( nsec ) \n" ,nsecTS - timestampOld);
 	printf ( "COMMAND from carcon : %s\n" , cmd ) ;
 
 	if ( strncmp ( cmd , DIR_FORWARD , CMP_LEN) == 0 ) {

@@ -13,12 +13,11 @@ import (
 		"os"
 	   )
 
-
 type Cartype struct {
 		Sr04Val	    uint32
 		IrLeftVal   uint32
 		IrRightVal  uint32
-		TimeStamp   uint32
+		TimeStamp   int64
 }
 
 const (
@@ -85,9 +84,13 @@ func main () {
 }
 
 func setSensorValue (conn net.Conn , logFile *os.File ) {
-
+	var getTS int64
 	for {
 		car = getSensorValue ( conn , logFile )
+		getTS=time.Now().UnixMicro()
+		if car.Sr04Val == 0 {
+			continue
+		}
 
 		fmt.Printf ( "/dev/car/sr04 --> %d\n" , car.Sr04Val )
 		fmt.Printf ( "/dev/car/ir_left --> %d\n" , car.IrLeftVal )
@@ -97,17 +100,11 @@ func setSensorValue (conn net.Conn , logFile *os.File ) {
 		devValue [DEV_IR_LEFT   ] = car.IrLeftVal
 		devValue [DEV_IR_RIGHT  ] = car.IrRightVal
 
-		oldTS := car.TimeStamp
-
-		NewTS := uint32 ( time.Now().UnixNano () )
-
-		fmt.Printf ( "Delay : %d (nsec) \n " , ( NewTS - oldTS ) )
+		fmt.Printf ( "Delay : %d (usec) \n " , getTS - car.TimeStamp )
 
 		for _, name := range devNames {
 			err := binary.Write (  devBuffer [name] , binary.LittleEndian , devValue [name])
 			manageError ( err )
-			newTunSENDTS := time.Now ().UnixNano ()
-			fmt.Fprintf ( logFile , "%s: %d\n" , name , newTunSENDTS )
 
 
 			_ , err = syscall.Write ( devFds[name] , devBuffer [name].Bytes () )
@@ -115,6 +112,9 @@ func setSensorValue (conn net.Conn , logFile *os.File ) {
 
 			devBuffer [ name ].Reset ()
 			manageError ( err )
+			
+			newTunSENDTS := int64( time.Now().UnixMicro () )
+			fmt.Fprintf ( logFile , "%s: %u\n" , name , newTunSENDTS )
 		}
 	}
 }

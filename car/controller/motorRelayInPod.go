@@ -20,7 +20,7 @@ type motorRelay struct {
 
 			MotorBytes string
 
-			TimeStamp uint32
+			TimeStamp int64
 
 			}
 func main () {
@@ -65,7 +65,7 @@ func run ( connWriter net.Conn ) {
 	motorFile , err := syscall.Open ( DEV_NAME , syscall.O_RDWR , 0775 )
 	motorLog , err  := os.OpenFile ( LOG , os.O_RDONLY , 0775 )
 
-	cmdBytes.TimeStamp = uint32 ( time.Now().UnixNano() )
+	cmdBytes.TimeStamp = int64 ( time.Now().Unix()+time.Now().UnixMicro() )
 
 
 
@@ -89,7 +89,6 @@ func run ( connWriter net.Conn ) {
 
 		if ( length == 0 ) && (err != nil ) {
 
-			time.Sleep ( time.Microsecond *  100 ) 
 			continue
 
 		} else {
@@ -105,11 +104,11 @@ func run ( connWriter net.Conn ) {
 		cmd := make ( []byte , 100 )
 
 
-		var oldTS uint32
+		var oldTS int64
 		fmt.Fscanf (motorLog ,"/dev/car/motor: %d\n" , &oldTS )
-		cmdBytes.TimeStamp = uint32 ( time.Now().UnixNano() )
-		fmt.Printf ("motor_delay(tunnel) : %d\n" , uint32 ( cmdBytes.TimeStamp - oldTS ) )
-		cmdBytes.TimeStamp = uint32 ( time.Now().UnixNano() )
+		cmdBytes.TimeStamp = int64 (time.Now().UnixMicro () - time.Now().Unix ()* 1000000)
+		fmt.Printf ("motor_delay(tunnel) : %d\n" , cmdBytes.TimeStamp - oldTS )
+		cmdBytes.TimeStamp = int64 (time.Now().UnixMicro ())
 		cmd , err = json.Marshal ( cmdBytes )
 		cmd = append ( cmd , byte ('\n') ) ;
 

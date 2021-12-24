@@ -5,17 +5,15 @@ import (
 	"os"
 	"encoding/binary"
 	"time"
-	"reflect"
 	"encoding/json"
 	"bufio"
 	"fmt"
 )
-
 type Cartype struct {
 	Sr04Val uint32
 	IrLeftVal uint32
 	IrRightVal uint32
-	TimeStamp  uint32
+	TimeStamp  int64
 
 }
 
@@ -74,8 +72,6 @@ func READ ( uport net.Conn ) {
 	var car Cartype
 
 	for {
-		carPrev := car
-
 		for i , name := range devName {
 			_ , err = devReader [ name ].Read (devByte [ name ] )
 
@@ -121,7 +117,7 @@ func READ ( uport net.Conn ) {
 
 
 		
-		car.TimeStamp = time.Now().UnixNano ()
+		car.TimeStamp = int64(time.Now().UnixMicro ())
 
 		byte1 , err := json.Marshal ( & car )
 
@@ -131,12 +127,6 @@ func READ ( uport net.Conn ) {
 
 		byte1 = append ( byte1 , byte ( '\n' ) )
 
-		if car.Sr04Val == 0 {
-			continue
-		}
-		if reflect.DeepEqual ( carPrev , car ) == true {
-			continue
-		}
 		fmt.Printf ( "sr04:%d ir_left:%d ir_right:%d \n" , car.Sr04Val , car.IrLeftVal , car.IrRightVal )
 		_ , err = uport.Write ( byte1 )
 
