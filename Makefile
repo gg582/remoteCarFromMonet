@@ -1,5 +1,5 @@
 
-SUBDIRS = car/controller car/driver car/test car/runner pod/driver pod/tunnel
+SUBDIRS = car/controller car/driver car/test car/runner pod/driver pod/tunnel car/tunnel
 
 .PHONY: $(SUBDIRS)
 

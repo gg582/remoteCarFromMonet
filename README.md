@@ -6,10 +6,10 @@ In this repository, there is no others' code, but only the codes written by Lee 
 There were a few more contributors from other parts of this project(which are mainly lost).
 Front-end, Higher level management: Kim Koung-Bin(김경빈), Abduolimov Alisherbek(@alisherfw)
 Structure Engineering is mainly from Kim Koung-Bin, smaller ideas were from Lee Yunjin and Abduolimov Alisherbek, Akhmad Kholmurodov(e.g: Device Driver Structures, TCP Flowchart at actual implementation, Integrated management)
-    **All of the sources are implemented by Lee Yunjin, but ideas are from whole laboratory.**
+**All of the sources are implemented by Lee Yunjin, but ideas are from whole laboratory.**
 
 *Here's a thing:*
-- Main Structure: Kim Koung-bin, Jin Sung-geun 
+    - Main Structure: Kim Koung-bin, Jin Sung-geun 
 - TCP Flowchart: Lee Yunjin, Kim Koung-bin, Jin Sung-geun
 - k8s Deploy Structure: Jin Sung-geun
 - Detailed k8s Structure: Lee Yunjin
@@ -20,14 +20,14 @@ Structure Engineering is mainly from Kim Koung-Bin, smaller ideas were from Lee 
 
 
 Basic network structure is:
- -Physical Car sends device status 
- - Virtual car gets information and runs simulation
- - Virtual car gives simulated result into physical car
- - Physical car executes those simulated results
+    - Physical Car sends device status 
+    - Virtual car gets information and runs simulation
+    - Virtual car gives simulated result into physical car
+    - Physical car executes those simulated results
 
- Motor Driver implementation: IOCTL to I2C driver
- Tunneling device driver is doubly linked list
- Others are normal gpio chardev.
+Motor Driver implementation: IOCTL to I2C driver
+Tunneling device driver is doubly linked list
+Others are normal gpio chardev.
 
 
  # Project tree
@@ -89,6 +89,6 @@ Simple bash scripts for tunneling transmitted information
 ## exec
 Miscellaneous scripts for controlling car, originally this scripts were called by shelljs(from missing front-end application)
 ## pod
-    early, and abstract ideas of this project
+early, and abstract ideas of this project
 
 

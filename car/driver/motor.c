@@ -12,7 +12,6 @@
 #include <linux/uaccess.h>
 #include <linux/kernel.h>
 #include <asm/io.h>
-#include <stdbool.h>
 
 #include "../common/ioctl_car_cmd.h"
 
@@ -42,7 +41,7 @@ char STOP[5] =	  { 0x01, 0x00,	0x00, 0x00,	0x00   } ;
 
 
 dev_t		dev  = 0 ;
-bool		flag = 1 ;
+_Bool		flag = 1 ;
 
 static struct 	class * devClass ;
 static struct 	cdev myCharDevice ;

@@ -179,8 +179,7 @@ static int __init DeviceInit(void) {
         printk("device index %d, Major = %d, Minor = %d\n", i,  MAJOR(dev[i]), MINOR(dev[i]));  // Log major and minor numbers
 
         // Create class for each device
-//        if ((devClass[i] = class_create(THIS_MODULE, classArr[i])) == NULL) {
-        if ((devClass[i] = class_create(/*THIS_MODULE,*/ classArr[i])) == NULL) {
+        if ((devClass[i] = class_create(THIS_MODULE, classArr[i])) == NULL) {
             printk("ERROR: Cannot create class\n");
             class_destroy(devClass[i]);
             return -1;

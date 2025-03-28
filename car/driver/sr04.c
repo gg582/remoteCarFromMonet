@@ -10,7 +10,6 @@
 #include <linux/io.h>
 #include <linux/fcntl.h>
 #include <linux/mman.h>
-#include <stdbool.h>
 #include <linux/ktime.h>
 #include <linux/interrupt.h>
 #include <linux/mutex.h>
