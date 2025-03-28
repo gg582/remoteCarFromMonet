@@ -7,28 +7,29 @@
 #include <time.h>
 #include <stdbool.h>
 
-int main () {
+int main ()
+{
 
-	int myDevice = open ( "/dev/car/sr04" , O_RDWR ) ;
-	int num = 0 ;
-	int i ;
-	unsigned long val = 0 ;
-	int ret;
-	char buf [255];
+    int myDevice = open ( "/dev/car/sr04", O_RDWR ) ;
+    int num = 0 ;
+    int i ;
+    unsigned long val = 0 ;
+    int ret;
+    char buf [255];
 
-	if ( myDevice == -1 ) {
-		perror ( "Open Funtion Failed" ) ; 
-		return -1 ;
-	}	
+    if ( myDevice == -1 ) {
+        perror ( "Open Funtion Failed" ) ;
+        return -1 ;
+    }
 
-	ret = read ( myDevice , & val , sizeof ( unsigned long ) ) ;
+    ret = read ( myDevice, & val, sizeof ( unsigned long ) ) ;
 
-	memset  ( buf, 0x00, sizeof (buf));
-	sprintf ( buf, "%d\n", val ) ;
-	write (1, buf, strlen (buf));
+    memset  ( buf, 0x00, sizeof (buf));
+    sprintf ( buf, "%d\n", val ) ;
+    write (1, buf, strlen (buf));
 
-	close ( myDevice ) ;
+    close ( myDevice ) ;
 
-	return 0 ;
+    return 0 ;
 }
 

@@ -1,34 +1,32 @@
 package main
 
 import (
-		"os"
-		"syscall"
-		"log"
-		"time"
-		"fmt"
-		"encoding/json"
-		"net"
-	   )
+	"encoding/json"
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"syscall"
+	"time"
+)
 
-const PORT	= ":10102"
-const PROTOCOL	= "tcp"
-const DEV_NAME  = "/dev/car/motor_tun"
+const PORT = ":10102"
+const PROTOCOL = "tcp"
+const DEV_NAME = "/dev/car/motor_tun"
 const LOG = "/home/pi/remote-car/motor_tun_delay.log"
 
-
 type motorRelay struct {
+	MotorBytes string
 
-			MotorBytes string
+	TimeStamp int64
+}
 
-			TimeStamp int64
-
-			}
-func main () {
+func main() {
 
 	arguments := os.Args
 
-	if len ( arguments ) < 2 {
-		fmt.Println ( "Please provide IP" )
+	if len(arguments) < 2 {
+		fmt.Println("Please provide IP")
 		return
 	}
 
@@ -36,93 +34,84 @@ func main () {
 	var err error
 
 	for {
-		fmt.Println ( "TCP connection trial(motor): ", arguments [ 1 ] + PORT )
-		connWriter , err = net.Dial ( PROTOCOL , arguments [ 1 ] + PORT )
+		fmt.Println("TCP connection trial(motor): ", arguments[1]+PORT)
+		connWriter, err = net.Dial(PROTOCOL, arguments[1]+PORT)
 
-		time.Sleep ( time.Second )
+		time.Sleep(time.Second)
 		if err != nil {
 			continue
 		} else {
-			fmt.Println ( "Success(motor): TCP connection establishment")
+			fmt.Println("Success(motor): TCP connection establishment")
 			break
 		}
 
 	}
 
-	run ( connWriter )
+	run(connWriter)
 }
 
-func handleError ( err error ) {
+func handleError(err error) {
 	if err != nil {
-		fmt.Println ( err )
+		fmt.Println(err)
 	}
 }
 
-func run ( connWriter net.Conn ) {
+func run(connWriter net.Conn) {
 
 	var cmdBytes motorRelay
 
-	motorFile , err := syscall.Open ( DEV_NAME , syscall.O_RDWR , 0775 )
-	motorLog , err  := os.OpenFile ( LOG , os.O_RDONLY , 0775 )
+	motorFile, err := syscall.Open(DEV_NAME, syscall.O_RDWR, 0775)
+	motorLog, err := os.OpenFile(LOG, os.O_RDONLY, 0775)
 
-	cmdBytes.TimeStamp = int64 ( time.Now().Unix()+time.Now().UnixMicro() )
-
-
+	cmdBytes.TimeStamp = int64(time.Now().Unix() + time.Now().UnixMicro())
 
 	if err != nil {
-		log.Println ( "cannot write log now" )
+		log.Println("cannot write log now")
 	}
 
-
-	byt := make ( []byte , 5 )
+	byt := make([]byte, 5)
 
 	for {
 
+		length, err := syscall.Read(motorFile, byt)
 
-		length , err := syscall.Read ( motorFile , byt )
+		cmdBytes.MotorBytes = string(byt)
 
-		cmdBytes.MotorBytes = string ( byt ) 
+		_, _ = syscall.Write(motorFile, []byte{0, 0, 0, 0})
 
-		_ , _ = syscall.Write ( motorFile , []byte { 0 , 0 , 0 , 0 } )
-
-
-
-		if ( length == 0 ) && (err != nil ) {
+		if (length == 0) && (err != nil) {
 
 			continue
 
 		} else {
 
-			fmt.Println ("Command from carcon:", cmdBytes.MotorBytes )
+			fmt.Println("Command from carcon:", cmdBytes.MotorBytes)
 		}
 
 		if err != nil {
-			fmt.Println ( err )
+			fmt.Println(err)
 		}
 
-
-		cmd := make ( []byte , 100 )
-
+		cmd := make([]byte, 100)
 
 		var oldTS int64
-		fmt.Fscanf (motorLog ,"/dev/car/motor: %d\n" , &oldTS )
-		cmdBytes.TimeStamp = int64 (time.Now().UnixMicro () - time.Now().Unix ()* 1000000)
-		fmt.Printf ("motor_delay(tunnel) : %d\n" , cmdBytes.TimeStamp - oldTS )
-		cmdBytes.TimeStamp = int64 (time.Now().UnixMicro ())
-		cmd , err = json.Marshal ( cmdBytes )
-		cmd = append ( cmd , byte ('\n') ) ;
+		fmt.Fscanf(motorLog, "/dev/car/motor: %d\n", &oldTS)
+		cmdBytes.TimeStamp = int64(time.Now().UnixMicro() - time.Now().Unix()*1000000)
+		fmt.Printf("motor_delay(tunnel) : %d\n", cmdBytes.TimeStamp-oldTS)
+		cmdBytes.TimeStamp = int64(time.Now().UnixMicro())
+		cmd, err = json.Marshal(cmdBytes)
+		cmd = append(cmd, byte('\n'))
 
 		if err != nil {
-			fmt.Println ( err ) 
+			fmt.Println(err)
 		}
 
-		_ , err = connWriter.Write ( cmd )
+		_, err = connWriter.Write(cmd)
 
 		if err != nil {
-			fmt.Println ( "Connection Broken" )
+			fmt.Println("Connection Broken")
 		}
 
 	}
 
 }
-

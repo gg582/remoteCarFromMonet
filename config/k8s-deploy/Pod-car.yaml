@@ -1,89 +1,89 @@
+---
 # for volumeF.yaml ( prometheus ) 
-#alertmanager:
+# alertmanager:
 #    persistentVolume:
 #        enabled: false
-#server:  
+# server:  
 #    persistentVolume:
 #        enabled: false
-#pushgateway: 
+# pushgateway: 
 #    persistentVolume:
 #        enabled: false
-
 apiVersion: v1
 kind: Pod
 metadata:
   name: podcar
 spec:
   nodeName: node1
-  containers: # create car container
-  - name: carcon
-    image: ubuntu:latest
-    securityContext:
-      privileged: true
-    command: [ "/bin/bash" , "-c" ]
-    args: [ "while true; do sleep 300 ; done" ] 
-    volumeMounts:
-    - mountPath: /dev/car/sr04
-      name: us-volume
-    - mountPath: /dev/car/motor
-      name: motor-volume
-    - mountPath: /dev/car/left_ir
-      name: ir0-volume
-    - mountPath: /dev/car/right_ir
-      name: ir1-volume
-    - mountPath: /home/pi/remote-car
-      name: remote-car-volume
-  - name: cartun # create tunnel container
-    image: ubuntu:latest
-    securityContext:
-      privileged: true
-    command: [ "/bin/bash" , "-c" ]
-    args: [ "while true ; do sleep 300 ; done" ] 
-    volumeMounts: #volumemounts
-    - mountPath: /dev/car/sr04_tun
-      name: us-volume4tun
-    - mountPath: /dev/car/motor_tun
-      name: motor-volume4tun
-    - mountPath: /dev/car/left_ir_tun
-      name: ir0-volume4tun
-    - mountPath: /dev/car/right_ir_tun
-      name: ir1-volume4tun
-    - mountPath: /home/pi/remote-car
-      name: remote-car-volume
-  volumes: # volumes
-  - name: us-volume
-    hostPath:
-      path: /dev/car/sr04
-      type: CharDevice
-  - name: motor-volume
-    hostPath:
-      path: /dev/car/motor
-      type:  CharDevice
-  - name: ir0-volume
-    hostPath:
-      path: /dev/car/left_ir
-      type: CharDevice
-  - name: ir1-volume
-    hostPath:
-      path: /dev/car/right_ir
-      type: CharDevice
-  - name: us-volume4tun
-    hostPath:
-      path: /dev/car/sr04_tun
-      type: CharDevice
-  - name: motor-volume4tun
-    hostPath:
-      path: /dev/car/motor_tun
-      type:  CharDevice
-  - name: ir0-volume4tun
-    hostPath:
-      path: /dev/car/right_ir_tun
-      type: CharDevice
-  - name: ir1-volume4tun
-    hostPath:
-      path: /dev/car/left_ir_tun
-      type: CharDevice
-  - name: remote-car-volume
-    hostPath: 
-      path: /home/pi/remote-car
-      type: DirectoryOrCreate
+  containers:  # create car container
+    - name: carcon
+      image: ubuntu:latest
+      securityContext:
+        privileged: true
+      command: [/bin/bash, -c]
+      args: [while true; do sleep 300 ; done]
+      volumeMounts:
+        - mountPath: /dev/car/sr04
+          name: us-volume
+        - mountPath: /dev/car/motor
+          name: motor-volume
+        - mountPath: /dev/car/left_ir
+          name: ir0-volume
+        - mountPath: /dev/car/right_ir
+          name: ir1-volume
+        - mountPath: /home/pi/remote-car
+          name: remote-car-volume
+    - name: cartun  # create tunnel container
+      image: ubuntu:latest
+      securityContext:
+        privileged: true
+      command: [/bin/bash, -c]
+      args: [while true ; do sleep 300 ; done]
+      volumeMounts:  # volumemounts
+        - mountPath: /dev/car/sr04_tun
+          name: us-volume4tun
+        - mountPath: /dev/car/motor_tun
+          name: motor-volume4tun
+        - mountPath: /dev/car/left_ir_tun
+          name: ir0-volume4tun
+        - mountPath: /dev/car/right_ir_tun
+          name: ir1-volume4tun
+        - mountPath: /home/pi/remote-car
+          name: remote-car-volume
+  volumes:  # volumes
+    - name: us-volume
+      hostPath:
+        path: /dev/car/sr04
+        type: CharDevice
+    - name: motor-volume
+      hostPath:
+        path: /dev/car/motor
+        type: CharDevice
+    - name: ir0-volume
+      hostPath:
+        path: /dev/car/left_ir
+        type: CharDevice
+    - name: ir1-volume
+      hostPath:
+        path: /dev/car/right_ir
+        type: CharDevice
+    - name: us-volume4tun
+      hostPath:
+        path: /dev/car/sr04_tun
+        type: CharDevice
+    - name: motor-volume4tun
+      hostPath:
+        path: /dev/car/motor_tun
+        type: CharDevice
+    - name: ir0-volume4tun
+      hostPath:
+        path: /dev/car/right_ir_tun
+        type: CharDevice
+    - name: ir1-volume4tun
+      hostPath:
+        path: /dev/car/left_ir_tun
+        type: CharDevice
+    - name: remote-car-volume
+      hostPath:
+        path: /home/pi/remote-car
+        type: DirectoryOrCreate

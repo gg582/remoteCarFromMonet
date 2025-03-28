@@ -6,7 +6,7 @@
 #include <netdb.h>
 #include <fcntl.h>
 #include <sys/time.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -23,25 +23,29 @@
 #define DIR_BACKWARD		"BKWD"
 #define DIR_TERMINATION		"TERM"
 
-void error(char *msg) {
+void error(char *msg)
+{
     perror(msg);
     exit(1);
 }
 int motor ;
 
-void sigHandler ( int dummy ) {
+void sigHandler ( int dummy )
+{
 
-	ioctl ( motor , PI_CMD_STOP) ;
-	close ( motor ) ;
-	exit ( 0 ) ;
-	
+    ioctl ( motor, PI_CMD_STOP) ;
+    close ( motor ) ;
+    exit ( 0 ) ;
+
 }
-void Clock ( int64_t *val ) {
-	struct timeval tm;
-	gettimeofday ( &tm, NULL );
-	*val = tm.tv_usec ;
+void Clock ( int64_t *val )
+{
+    struct timeval tm;
+    gettimeofday ( &tm, NULL );
+    *val = tm.tv_usec ;
 }
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 
     int parentFd; /* parent socket */
     int childFd; /* child socket */
@@ -51,16 +55,16 @@ int main(int argc, char **argv) {
     struct sockaddr_in clientAddr; /* client addr */
     char buf[CMD_LEN]; /* message buffer */
     int optVal; /* flag value for setsockopt */
-    signal ( SIGKILL , sigHandler ) ;
+    signal ( SIGKILL, sigHandler ) ;
     printf ( "Car begins.\n" );
 
-    /* 
-     * check command line arguments 
+    /*
+     * check command line arguments
      */
     portNum = 10102 ;
 
-    /* 
-     * socket: create the parent socket 
+    /*
+     * socket: create the parent socket
      */
     parentFd = socket(AF_INET, SOCK_STREAM, 0);
     if (parentFd < 0) {
@@ -68,15 +72,15 @@ int main(int argc, char **argv) {
         error("ERROR opening socket");
     }
 
-    /* setsockopt: Handy debugging trick that lets 
-     * us rerun the server immediately after we kill it; 
-     * otherwise we have to wait about 20 secs. 
-     * Eliminates "ERROR on binding: Address already in use" error. 
+    /* setsockopt: Handy debugging trick that lets
+     * us rerun the server immediately after we kill it;
+     * otherwise we have to wait about 20 secs.
+     * Eliminates "ERROR on binding: Address already in use" error.
      */
     optVal = 1;
 
-    setsockopt(parentFd, SOL_SOCKET, SO_REUSEADDR, 
-	         (const void *)&optVal , sizeof(int));
+    setsockopt(parentFd, SOL_SOCKET, SO_REUSEADDR,
+               (const void *)&optVal, sizeof(int));
 
     /*
      * build the server's Internet address
@@ -92,25 +96,25 @@ int main(int argc, char **argv) {
     /* this is the port we will listen on */
     serverAddr.sin_port = htons((unsigned short)portNum);
 
-    /* 
-     * bind: associate the parent socket with a port 
+    /*
+     * bind: associate the parent socket with a port
      */
     if (bind(parentFd, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
         error("ERROR on binding");
     }
 
-    /* 
-     * listen: make this socket ready to accept connection requests 
+    /*
+     * listen: make this socket ready to accept connection requests
      */
 
     printf ( "Waiting for connection\n" ) ;
 
-    if (listen(parentFd, 1) < 0) { /* allow 1 requests to queue up */ 
+    if (listen(parentFd, 1) < 0) { /* allow 1 requests to queue up */
         error("ERROR on listen");
     }
 
-    /* 
-     * main loop: wait for a connection request, echo input line, 
+    /*
+     * main loop: wait for a connection request, echo input line,
      * then close connection.
      */
 
@@ -121,7 +125,7 @@ int main(int argc, char **argv) {
     if (childFd < 0) {
         error("ERROR on accept");
     }
- 
+
     printf ( "Connection established\n" ) ;
 
     motor = open ( DEVNAME, O_RDWR ) ;
@@ -133,46 +137,46 @@ int main(int argc, char **argv) {
 
         bzero(buf, CMD_LEN);
 
-    	recvSize = read (childFd, buf,  CMD_LEN );
+        recvSize = read (childFd, buf,  CMD_LEN );
 
-	if ( ( recvSize == 0) ) {
-		printf ( "ERROR on reading\n" );
-		exit ( 1 ) ;
-	}
+        if ( ( recvSize == 0) ) {
+            printf ( "ERROR on reading\n" );
+            exit ( 1 ) ;
+        }
 
-	printf ( "received json string is : %s\n" ,  buf ) ;
-	char timestampGetString [ 95 ] ;
+        printf ( "received json string is : %s\n",  buf ) ;
+        char timestampGetString [ 95 ] ;
 
-	int64_t timestampOld , nsecTS;
+        int64_t timestampOld, nsecTS;
 
 
-	sscanf ( buf ,  "{\"MotorBytes\":\"%[^\"]\",\"TimeStamp\":\"%u\"}\n%*[^\n]" , cmd , &timestampOld ) ;
+        sscanf ( buf,  "{\"MotorBytes\":\"%[^\"]\",\"TimeStamp\":\"%u\"}\n%*[^\n]", cmd, &timestampOld ) ;
 
-	Clock (&nsecTS);
+        Clock (&nsecTS);
 
-	printf ( "time Delay : %lld ( nsec ) \n" ,nsecTS - timestampOld);
-	printf ( "COMMAND from carcon : %s\n" , cmd ) ;
+        printf ( "time Delay : %lld ( nsec ) \n",nsecTS - timestampOld);
+        printf ( "COMMAND from carcon : %s\n", cmd ) ;
 
-	if ( strncmp ( cmd , DIR_FORWARD , CMP_LEN) == 0 ) {
-                printf("DIRECTION --> FORWARD\n");
-        	ioctl ( motor , PI_CMD_FORWARD) ;
-        } else if ( strncmp ( cmd , DIR_LEFT , CMP_LEN) == 0 ) {
-                printf("DIRECTION --> LEFT\n");
-		ioctl ( motor , PI_CMD_LEFT) ;
-        } else if ( strncmp ( cmd , DIR_RIGHT,CMP_LEN) == 0 ) {
-                printf("DIRECTION --> RIGHT\n");
-		ioctl ( motor , PI_CMD_RIGHT ) ;
-        } else if ( strncmp ( cmd , DIR_BACKWARD,CMP_LEN) == 0 ) {
-                printf("DIRECTION --> BACKWARD\n");
-		ioctl ( motor , PI_CMD_BACKWARD) ;
-        } else if ( strncmp ( cmd , DIR_TERMINATION, CMP_LEN) == 0 ) {
-                printf("DIRECTION --> TERMINATION\n");
-		ioctl ( motor , PI_CMD_STOP) ;
-		break;
+        if ( strncmp ( cmd, DIR_FORWARD, CMP_LEN) == 0 ) {
+            printf("DIRECTION --> FORWARD\n");
+            ioctl ( motor, PI_CMD_FORWARD) ;
+        } else if ( strncmp ( cmd, DIR_LEFT, CMP_LEN) == 0 ) {
+            printf("DIRECTION --> LEFT\n");
+            ioctl ( motor, PI_CMD_LEFT) ;
+        } else if ( strncmp ( cmd, DIR_RIGHT,CMP_LEN) == 0 ) {
+            printf("DIRECTION --> RIGHT\n");
+            ioctl ( motor, PI_CMD_RIGHT ) ;
+        } else if ( strncmp ( cmd, DIR_BACKWARD,CMP_LEN) == 0 ) {
+            printf("DIRECTION --> BACKWARD\n");
+            ioctl ( motor, PI_CMD_BACKWARD) ;
+        } else if ( strncmp ( cmd, DIR_TERMINATION, CMP_LEN) == 0 ) {
+            printf("DIRECTION --> TERMINATION\n");
+            ioctl ( motor, PI_CMD_STOP) ;
+            break;
         } else {
-                printf("DEFAULT DIRECTION --> STOP\n");
-		ioctl ( motor , PI_CMD_STOP) ;
+            printf("DEFAULT DIRECTION --> STOP\n");
+            ioctl ( motor, PI_CMD_STOP) ;
         }
     }
-        close(childFd);
+    close(childFd);
 }

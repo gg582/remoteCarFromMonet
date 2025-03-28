@@ -14,10 +14,10 @@
 #undef PDEBUG             /* undef it, just in case */
 #ifdef CAR_DEBUG
 #  ifdef __KERNEL__
-     /* This one if debugging is on, and kernel space */
+/* This one if debugging is on, and kernel space */
 #    define PDEBUG(fmt, args...) printk( KERN_DEBUG "car: " fmt, ## args)
 #  else
-     /* This one for user space */
+/* This one for user space */
 #    define PDEBUG(fmt, args...) fprintf(stderr, fmt, ## args)
 #  endif
 #else
@@ -71,18 +71,18 @@
  * Representation of car quantum sets.
  */
 struct car_qset {
-	void **data;
-	struct car_qset *next;
+    void **data;
+    struct car_qset *next;
 };
 
 struct car_dev {
-	struct car_qset *data;  /* Pointer to first quantum set */
-	int quantum;              /* the current quantum size */
-	int qset;                 /* the current array size */
-	unsigned long size;       /* amount of data stored here */
-	unsigned int access_key;  /* used by caruid and carpriv */
-	struct semaphore sem;     /* mutual exclusion semaphore     */
-	struct cdev cdev;	  /* Char device structure		*/
+    struct car_qset *data;  /* Pointer to first quantum set */
+    int quantum;              /* the current quantum size */
+    int qset;                 /* the current array size */
+    unsigned long size;       /* amount of data stored here */
+    unsigned int access_key;  /* used by caruid and carpriv */
+    struct semaphore sem;     /* mutual exclusion semaphore     */
+    struct cdev cdev;	  /* Char device structure		*/
 };
 
 /*
@@ -117,9 +117,9 @@ void    car_access_cleanup(void);
 int     car_trim(struct car_dev *dev);
 
 ssize_t car_read(struct file *filp, char __user *buf, size_t count,
-                   loff_t *f_pos);
+                 loff_t *f_pos);
 ssize_t car_write(struct file *filp, const char __user *buf, size_t count,
-                    loff_t *f_pos);
+                  loff_t *f_pos);
 loff_t  car_llseek(struct file *filp, loff_t off, int whence);
 
 #endif /* _CAR_H_ */

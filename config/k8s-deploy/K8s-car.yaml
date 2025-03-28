@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: Pod
 metadata:
@@ -5,25 +6,24 @@ metadata:
 spec:
   nodeName: k8scar
   containers:
-  - name: k8scar
-    image: ubuntu:latest
-    securityContext:
-      privileged: true
-    command: [ "/bin/bash" , "-c" ]
-    args: [ "while true ; do sleep 300 ; done" ] 
-    volumeMounts:
-    - mountPath: /dev/car
-      name: car-volume
-    - mountPath: /home/pi/remote-car
-      name: cloudos-volume
+    - name: k8scar
+      image: ubuntu:latest
+      securityContext:
+        privileged: true
+      command: [/bin/bash, -c]
+      args: [while true ; do sleep 300 ; done]
+      volumeMounts:
+        - mountPath: /dev/car
+          name: car-volume
+        - mountPath: /home/pi/remote-car
+          name: cloudos-volume
   volumes:
-  - name: car-volume
-    hostPath:
-            #sr04 path
-      path: /dev/car
-      type: Directory
-  - name: cloudos-volume
-    hostPath:
-      path: /home/pi/remote-car
-      type:  DirectoryOrCreate
-
+    - name: car-volume
+      hostPath:
+            # sr04 path
+        path: /dev/car
+        type: Directory
+    - name: cloudos-volume
+      hostPath:
+        path: /home/pi/remote-car
+        type: DirectoryOrCreate

@@ -6,19 +6,20 @@
 #define DEVNAME "/dev/car/motor"
 #include <ioctl_car_cmd.h>
 
-int main () {
+int main ()
+{
 
-	int dev ;
+    int dev ;
 
-	dev = open ( DEVNAME , O_RDWR ) ;
+    dev = open ( DEVNAME, O_RDWR ) ;
 
-	if ( dev < 0 ) {
-		exit ( 1 ) ;
-	}
+    if ( dev < 0 ) {
+        exit ( 1 ) ;
+    }
 
-	ioctl ( dev , PI_CMD_BACKWARD) ;
+    ioctl ( dev, PI_CMD_BACKWARD) ;
 
-	close (dev);
+    close (dev);
 
-	return 0 ;
+    return 0 ;
 }

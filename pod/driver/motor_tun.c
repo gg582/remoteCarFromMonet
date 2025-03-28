@@ -15,13 +15,13 @@
 #include "ioctl_car_cmd.h"
 
 struct car_motor_tun {
-        wait_queue_head_t inq, outq;       /* read and write queues */
-        char *buffer, *end;                /* begin of buf, end of buf */
-        int buffersize;                    /* used in pointer arithmetic */
-        char *rp, *wp;                     /* where to read, where to write */
-        int nreaders, nwriters;            /* number of openings for r/w */
-        struct semaphore sem;              /* mutual exclusion semaphore */
-        struct cdev cdev;                  /* Char device structure */
+    wait_queue_head_t inq, outq;       /* read and write queues */
+    char *buffer, *end;                /* begin of buf, end of buf */
+    int buffersize;                    /* used in pointer arithmetic */
+    char *rp, *wp;                     /* where to read, where to write */
+    int nreaders, nwriters;            /* number of openings for r/w */
+    struct semaphore sem;              /* mutual exclusion semaphore */
+    struct cdev cdev;                  /* Char device structure */
 };
 
 /* parameters */
@@ -40,256 +40,266 @@ static int spacefree(struct car_motor_tun *dev);
  */
 static int car_motor_open(struct inode *inode, struct file *filp)
 {
-	struct car_motor_tun *dev;
+    struct car_motor_tun *dev;
 
-	dev = container_of(inode->i_cdev, struct car_motor_tun, cdev);
-	filp->private_data = dev;
+    dev = container_of(inode->i_cdev, struct car_motor_tun, cdev);
+    filp->private_data = dev;
 
-	if (down_interruptible(&dev->sem))
-		return -ERESTARTSYS;
-	if (!dev->buffer) {
-		/* allocate the buffer */
-		dev->buffer = kmalloc(car_motor_buffer, GFP_KERNEL);
-		if (!dev->buffer) {
-			up(&dev->sem);
-			return -ENOMEM;
-		}
-	}
-	dev->buffersize = car_motor_buffer;
-	dev->end = dev->buffer + dev->buffersize;
-	dev->rp = dev->wp = dev->buffer; 
+    if (down_interruptible(&dev->sem))
+        return -ERESTARTSYS;
+    if (!dev->buffer) {
+        /* allocate the buffer */
+        dev->buffer = kmalloc(car_motor_buffer, GFP_KERNEL);
+        if (!dev->buffer) {
+            up(&dev->sem);
+            return -ENOMEM;
+        }
+    }
+    dev->buffersize = car_motor_buffer;
+    dev->end = dev->buffer + dev->buffersize;
+    dev->rp = dev->wp = dev->buffer;
 
-	if (filp->f_mode & FMODE_READ)
-		dev->nreaders++;
-	if (filp->f_mode & FMODE_WRITE)
-		dev->nwriters++;
-	up(&dev->sem);
+    if (filp->f_mode & FMODE_READ)
+        dev->nreaders++;
+    if (filp->f_mode & FMODE_WRITE)
+        dev->nwriters++;
+    up(&dev->sem);
 
-	return nonseekable_open(inode, filp);
+    return nonseekable_open(inode, filp);
 }
 
 static int car_motor_release(struct inode *inode, struct file *filp)
 {
-	struct car_motor_tun *dev = filp->private_data;
+    struct car_motor_tun *dev = filp->private_data;
 
-	down(&dev->sem);
-	if (filp->f_mode & FMODE_READ)
-		dev->nreaders--;
-	if (filp->f_mode & FMODE_WRITE)
-		dev->nwriters--;
-	if (dev->nreaders + dev->nwriters == 0) {
-		kfree(dev->buffer);
-		dev->buffer = NULL; /* the other fields are not checked on open */
-	}
-	up(&dev->sem);
-	return 0;
+    down(&dev->sem);
+    if (filp->f_mode & FMODE_READ)
+        dev->nreaders--;
+    if (filp->f_mode & FMODE_WRITE)
+        dev->nwriters--;
+    if (dev->nreaders + dev->nwriters == 0) {
+        kfree(dev->buffer);
+        dev->buffer = NULL; /* the other fields are not checked on open */
+    }
+    up(&dev->sem);
+    return 0;
 }
 
 static ssize_t car_motor_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
-	struct car_motor_tun *dev = filp->private_data;
+    struct car_motor_tun *dev = filp->private_data;
 
-	if (down_interruptible(&dev->sem))
-		return -ERESTARTSYS;
+    if (down_interruptible(&dev->sem))
+        return -ERESTARTSYS;
 
-	PDEBUG("\" (car_motor_read) dev->wp:%p    dev->rp:%p\" \n",dev->wp,dev->rp);
+    PDEBUG("\" (car_motor_read) dev->wp:%p    dev->rp:%p\" \n",dev->wp,dev->rp);
 
-	while (dev->rp == dev->wp) { /* nothing to read */
-		up(&dev->sem); /* release the lock */
-		if (filp->f_flags & O_NONBLOCK)
-			return -EAGAIN;
-		PDEBUG("\"%s\" reading: going to sleep\n", current->comm);
-		if (wait_event_interruptible(dev->inq, (dev->rp != dev->wp)))
-			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
-		/* otherwise loop, but first reacquire the lock */
-		if (down_interruptible(&dev->sem))
-			return -ERESTARTSYS;
-	}
-	/* ok, data is there, return something */
-	if (dev->wp > dev->rp)
-		count = min(count, (size_t)(dev->wp - dev->rp));
-	else /* the write pointer has wrapped, return data up to dev->end */
-		count = min(count, (size_t)(dev->end - dev->rp));
-	if (copy_to_user(buf, dev->rp, count)) {
-		up (&dev->sem);
-		return -EFAULT;
-	}
-	dev->rp += count;
-	if (dev->rp == dev->end)
-		dev->rp = dev->buffer; /* wrapped */
-	up (&dev->sem);
+    while (dev->rp == dev->wp) { /* nothing to read */
+        up(&dev->sem); /* release the lock */
+        if (filp->f_flags & O_NONBLOCK)
+            return -EAGAIN;
+        PDEBUG("\"%s\" reading: going to sleep\n", current->comm);
+        if (wait_event_interruptible(dev->inq, (dev->rp != dev->wp)))
+            return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+        /* otherwise loop, but first reacquire the lock */
+        if (down_interruptible(&dev->sem))
+            return -ERESTARTSYS;
+    }
+    /* ok, data is there, return something */
+    if (dev->wp > dev->rp)
+        count = min(count, (size_t)(dev->wp - dev->rp));
+    else /* the write pointer has wrapped, return data up to dev->end */
+        count = min(count, (size_t)(dev->end - dev->rp));
+    if (copy_to_user(buf, dev->rp, count)) {
+        up (&dev->sem);
+        return -EFAULT;
+    }
+    dev->rp += count;
+    if (dev->rp == dev->end)
+        dev->rp = dev->buffer; /* wrapped */
+    up (&dev->sem);
 
-	/* finally, awake any writers and return */
-	wake_up_interruptible(&dev->outq);
-	PDEBUG("\"%s\" did read %li bytes\n",current->comm, (long)count);
-	return count;
+    /* finally, awake any writers and return */
+    wake_up_interruptible(&dev->outq);
+    PDEBUG("\"%s\" did read %li bytes\n",current->comm, (long)count);
+    return count;
 }
 
 static int car_getwritespace(struct car_motor_tun *dev, struct file *filp)
 {
-	while (spacefree(dev) == 0) { /* full */
-		DEFINE_WAIT(wait);
-		
-		up(&dev->sem);
-		if (filp->f_flags & O_NONBLOCK)
-			return -EAGAIN;
-		PDEBUG("\"%s\" writing: going to sleep\n",current->comm);
-		prepare_to_wait(&dev->outq, &wait, TASK_INTERRUPTIBLE);
-		if (spacefree(dev) == 0)
-			schedule();
-		finish_wait(&dev->outq, &wait);
-		if (signal_pending(current))
-			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
-		if (down_interruptible(&dev->sem))
-			return -ERESTARTSYS;
-	}
-	return 0;
-}	
+    while (spacefree(dev) == 0) { /* full */
+        DEFINE_WAIT(wait);
+
+        up(&dev->sem);
+        if (filp->f_flags & O_NONBLOCK)
+            return -EAGAIN;
+        PDEBUG("\"%s\" writing: going to sleep\n",current->comm);
+        prepare_to_wait(&dev->outq, &wait, TASK_INTERRUPTIBLE);
+        if (spacefree(dev) == 0)
+            schedule();
+        finish_wait(&dev->outq, &wait);
+        if (signal_pending(current))
+            return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+        if (down_interruptible(&dev->sem))
+            return -ERESTARTSYS;
+    }
+    return 0;
+}
 
 /* How much space is free? */
 static int spacefree(struct car_motor_tun *dev)
 {
-	if (dev->rp == dev->wp)
-		return dev->buffersize - 1;
-	return ((dev->rp + dev->buffersize - dev->wp) % dev->buffersize) - 1;
+    if (dev->rp == dev->wp)
+        return dev->buffersize - 1;
+    return ((dev->rp + dev->buffersize - dev->wp) % dev->buffersize) - 1;
 }
 
-static long car_motor_ioctl (struct file *filp, unsigned int command, unsigned long arg) 
+static long car_motor_ioctl (struct file *filp, unsigned int command, unsigned long arg)
 {
-	struct car_motor_tun *dev = filp->private_data;
-	int result;
-	size_t count;
-       
-	if (down_interruptible(&dev->sem))
-		return -ERESTARTSYS;
+    struct car_motor_tun *dev = filp->private_data;
+    int result;
+    size_t count;
 
-	result = car_getwritespace(dev, filp);
+    if (down_interruptible(&dev->sem))
+        return -ERESTARTSYS;
 
-	if (result)
-		return result; /* car_getwritespace called up(&dev->sem) */
+    result = car_getwritespace(dev, filp);
 
-	PDEBUG("\"%s\" ioctl is called\n",current->comm);
+    if (result)
+        return result; /* car_getwritespace called up(&dev->sem) */
 
-	count = MAX_CMD_STR_LEN;
+    PDEBUG("\"%s\" ioctl is called\n",current->comm);
 
-	count = min(count, (size_t)spacefree(dev));
+    count = MAX_CMD_STR_LEN;
 
-	if (dev->wp >= dev->rp)
-		count = min(count, (size_t)(dev->end - dev->wp)); /* to end-of-buf */
-	else 
-		count = min(count, (size_t)(dev->rp - dev->wp - 1));
+    count = min(count, (size_t)spacefree(dev));
+
+    if (dev->wp >= dev->rp)
+        count = min(count, (size_t)(dev->end - dev->wp)); /* to end-of-buf */
+    else
+        count = min(count, (size_t)(dev->rp - dev->wp - 1));
 
 #if 1
-	if ( count < MAX_CMD_STR_LEN ) return -1;
+    if ( count < MAX_CMD_STR_LEN ) return -1;
 #endif
 
-	switch (command) {
-		case	PI_CMD_STOP	: memcpy ( dev->wp, STOP, MAX_CMD_STR_LEN); break;
-		case	PI_CMD_LEFT 	: memcpy ( dev->wp, LEFT, MAX_CMD_STR_LEN); break;
-		case	PI_CMD_RIGHT	: memcpy ( dev->wp, RIGHT, MAX_CMD_STR_LEN); break;
-		case	PI_CMD_FORWARD	: memcpy ( dev->wp, FORWARD, MAX_CMD_STR_LEN); break;
-		case	PI_CMD_BACKWARD	: memcpy ( dev->wp, BACKWARD, MAX_CMD_STR_LEN); break;
-	}
+    switch (command) {
+    case	PI_CMD_STOP	:
+        memcpy ( dev->wp, STOP, MAX_CMD_STR_LEN);
+        break;
+    case	PI_CMD_LEFT 	:
+        memcpy ( dev->wp, LEFT, MAX_CMD_STR_LEN);
+        break;
+    case	PI_CMD_RIGHT	:
+        memcpy ( dev->wp, RIGHT, MAX_CMD_STR_LEN);
+        break;
+    case	PI_CMD_FORWARD	:
+        memcpy ( dev->wp, FORWARD, MAX_CMD_STR_LEN);
+        break;
+    case	PI_CMD_BACKWARD	:
+        memcpy ( dev->wp, BACKWARD, MAX_CMD_STR_LEN);
+        break;
+    }
 
-	dev->wp += count;
+    dev->wp += count;
 
-	if (dev->wp == dev->end)
-		dev->wp = dev->buffer; /* wrapped */
+    if (dev->wp == dev->end)
+        dev->wp = dev->buffer; /* wrapped */
 
-	up(&dev->sem);
+    up(&dev->sem);
 
-	/* finally, awake any reader */
-	wake_up_interruptible(&dev->inq);  /* blocked in read() and select() */
+    /* finally, awake any reader */
+    wake_up_interruptible(&dev->inq);  /* blocked in read() and select() */
 
-	PDEBUG("\"%s\" (ioctl --> return)\n",current->comm);
+    PDEBUG("\"%s\" (ioctl --> return)\n",current->comm);
 
-	return command;
+    return command;
 }
 
 static unsigned int car_motor_poll(struct file *filp, poll_table *wait)
 {
-	struct car_motor_tun *dev = filp->private_data;
-	unsigned int mask = 0;
+    struct car_motor_tun *dev = filp->private_data;
+    unsigned int mask = 0;
 
-	down(&dev->sem);
-	poll_wait(filp, &dev->inq,  wait);
-	poll_wait(filp, &dev->outq, wait);
-	if (dev->rp != dev->wp)
-		mask |= POLLIN | POLLRDNORM;	/* readable */
-	if (spacefree(dev))
-		mask |= POLLOUT | POLLWRNORM;	/* writable */
-	up(&dev->sem);
-	return mask;
+    down(&dev->sem);
+    poll_wait(filp, &dev->inq,  wait);
+    poll_wait(filp, &dev->outq, wait);
+    if (dev->rp != dev->wp)
+        mask |= POLLIN | POLLRDNORM;	/* readable */
+    if (spacefree(dev))
+        mask |= POLLOUT | POLLWRNORM;	/* writable */
+    up(&dev->sem);
+    return mask;
 }
 
 struct file_operations car_motor_tun_fops = {
-	.owner =	THIS_MODULE,
-	.llseek =	no_llseek,
-	.read =		car_motor_read,
+    .owner =	THIS_MODULE,
+    .llseek =	no_llseek,
+    .read =		car_motor_read,
 #if 0
-	.write =	car_motor_write,
+    .write =	car_motor_write,
 #endif
-	.poll =		car_motor_poll,
-	.unlocked_ioctl = car_motor_ioctl,
-	.open =		car_motor_open,
-	.release =	car_motor_release,
+    .poll =		car_motor_poll,
+    .unlocked_ioctl = car_motor_ioctl,
+    .open =		car_motor_open,
+    .release =	car_motor_release,
 };
 
 static void car_motor_setup_cdev(struct car_motor_tun *dev, int index)
 {
-	int err, devno = car_motor_devno + index;
-    
-	cdev_init(&dev->cdev, &car_motor_tun_fops);
-	dev->cdev.owner = THIS_MODULE;
-	err = cdev_add (&dev->cdev, devno, 1);
-	/* Fail gracefully if need be */
-	if (err)
-		printk(KERN_NOTICE "Error %d adding car_motor %d", err, index);
+    int err, devno = car_motor_devno + index;
+
+    cdev_init(&dev->cdev, &car_motor_tun_fops);
+    dev->cdev.owner = THIS_MODULE;
+    err = cdev_add (&dev->cdev, devno, 1);
+    /* Fail gracefully if need be */
+    if (err)
+        printk(KERN_NOTICE "Error %d adding car_motor %d", err, index);
 }
 
 int car_motor_init(dev_t firstdev)
 {
-	int i, result;
+    int i, result;
 
-	result = register_chrdev_region(firstdev, car_motor_nr_devs, "car_motor");
+    result = register_chrdev_region(firstdev, car_motor_nr_devs, "car_motor");
 
-	if (result < 0) {
-		printk(KERN_NOTICE "Unable to get carp region, error %d\n", result);
-		return 0;
-	}
+    if (result < 0) {
+        printk(KERN_NOTICE "Unable to get carp region, error %d\n", result);
+        return 0;
+    }
 
-	car_motor_devno = firstdev;
+    car_motor_devno = firstdev;
 
-	car_motor_devices = kmalloc(car_motor_nr_devs * sizeof(struct car_motor_tun), GFP_KERNEL);
+    car_motor_devices = kmalloc(car_motor_nr_devs * sizeof(struct car_motor_tun), GFP_KERNEL);
 
-	if (car_motor_devices == NULL) {
-		unregister_chrdev_region(firstdev, car_motor_nr_devs);
-		return 0;
-	}
+    if (car_motor_devices == NULL) {
+        unregister_chrdev_region(firstdev, car_motor_nr_devs);
+        return 0;
+    }
 
-	memset(car_motor_devices, 0, car_motor_nr_devs * sizeof(struct car_motor_tun));
+    memset(car_motor_devices, 0, car_motor_nr_devs * sizeof(struct car_motor_tun));
 
-	for (i = 0; i < car_motor_nr_devs; i++) {
-		init_waitqueue_head(&(car_motor_devices[i].inq));
-		init_waitqueue_head(&(car_motor_devices[i].outq));
-		sema_init(&car_motor_devices[i].sem , 1 );
-		car_motor_setup_cdev(car_motor_devices + i, i);
-	}
-	return car_motor_nr_devs;
+    for (i = 0; i < car_motor_nr_devs; i++) {
+        init_waitqueue_head(&(car_motor_devices[i].inq));
+        init_waitqueue_head(&(car_motor_devices[i].outq));
+        sema_init(&car_motor_devices[i].sem, 1 );
+        car_motor_setup_cdev(car_motor_devices + i, i);
+    }
+    return car_motor_nr_devs;
 }
 
 void car_motor_cleanup(void)
 {
-	int i;
+    int i;
 
-	if (!car_motor_devices)
-		return; /* nothing else to release */
+    if (!car_motor_devices)
+        return; /* nothing else to release */
 
-	for (i = 0; i < car_motor_nr_devs; i++) {
-		cdev_del(&car_motor_devices[i].cdev);
-		kfree(car_motor_devices[i].buffer);
-	}
-	kfree(car_motor_devices);
-	unregister_chrdev_region(car_motor_devno, car_motor_nr_devs);
-	car_motor_devices = NULL; /* pedantic */
+    for (i = 0; i < car_motor_nr_devs; i++) {
+        cdev_del(&car_motor_devices[i].cdev);
+        kfree(car_motor_devices[i].buffer);
+    }
+    kfree(car_motor_devices);
+    unregister_chrdev_region(car_motor_devno, car_motor_nr_devs);
+    car_motor_devices = NULL; /* pedantic */
 }
