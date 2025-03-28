@@ -9,7 +9,7 @@ Structure Engineering is mainly from Kim Koung-Bin, smaller ideas were from Lee 
 **All of the sources are implemented by Lee Yunjin, but ideas are from whole laboratory.**
 
 *Here's a thing:*
-    - Main Structure: Kim Koung-bin, Jin Sung-geun 
+- Main Structure: Kim Koung-bin, Jin Sung-geun 
 - TCP Flowchart: Lee Yunjin, Kim Koung-bin, Jin Sung-geun
 - k8s Deploy Structure: Jin Sung-geun
 - Detailed k8s Structure: Lee Yunjin
