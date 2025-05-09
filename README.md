@@ -68,6 +68,7 @@ In tunneling device, there is a program catching a command from its tunnel while
 Common headers
 ### car/controller
 Go language, and shell script demos for emergency controls(manual act control)
+Miscellaneous scripts for controlling car, originally this scripts were called by shelljs(from missing front-end application)
 ### car/driver
 Linux Device Drivers for actual hardware devices
 ### car/real-car
@@ -88,7 +89,7 @@ Tunneling device driver
 Early idea of Linux Device Drivers for physical car
 Simple bash scripts for tunneling transmitted information
 ## exec
-Miscellaneous scripts for controlling car, originally this scripts were called by shelljs(from missing front-end application)
+pure-shell prototypes and some emergency controls
 ## pod
 early, and abstract ideas of this project
 
