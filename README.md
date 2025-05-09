@@ -2,7 +2,7 @@
 
 This provides an environment to control a car at long distance.
 This is an excerpt from Professor Jin Sung-geun 's laboratory.
-In this repository, there is no others' code, but only the codes written by Lee Yunjin except unused prototype buffer, and early pure bash prototypes(which are unused after constructing flow chart).
+In this repository, there is no others' code, but only the codes written by Lee Yunjin except early pure bash prototypes(which are unused after constructing flow chart: e.g. reader.sh).
 There were a few more contributors from other parts of this project(which are mainly lost).
 Front-end, Higher level management: Kim Koung-Bin(김경빈), Abduolimov Alisherbek(@alisherfw)
 Structure Engineering is mainly from Kim Koung-Bin, smaller ideas were from Lee Yunjin and Abduolimov Alisherbek, Akhmad Kholmurodov(e.g: Device Driver Structures, TCP Flowchart at actual implementation, Integrated management)
