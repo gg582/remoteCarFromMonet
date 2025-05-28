@@ -7,7 +7,7 @@ Except those few files, all bash scripts, C, and Golang scripts are solely writt
 There were a few more contributors from other parts of this project(which are mainly lost).
 Front-end, Higher level management: Kim Koung-Bin(김경빈), Abduolimov Alisherbek(@alisherfw)
 Structure Engineering is mainly from Kim Koung-Bin, smaller ideas were from Lee Yunjin and Abduolimov Alisherbek, Akhmad Kholmurodov(e.g: Device Driver Structures, TCP Flowchart at actual implementation, Integrated management)
-**All of the sources are implemented by Lee Yunjin, but ideas are from whole laboratory.**
+**Almost all of the sources are implemented by Lee Yunjin, but ideas are from whole laboratory.**
 
 *Here's a thing:*
 - Main Structure: Kim Koung-bin, Jin Sung-geun 
