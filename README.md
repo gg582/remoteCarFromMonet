@@ -2,11 +2,18 @@
 
 This provides an environment to control a car at long distance.
 This is an excerpt from Professor Jin Sung-geun 's laboratory.
+
 In this repository, there is no others' code, but only the codes written by Lee Yunjin except early pure bash prototypes(which are unused after constructing flow chart: e.g. reader.sh).
+
 Except those few files, all bash scripts, C, and Golang scripts are solely written by Lee Yunjin.
-There were a few more contributors from other parts of this project(which are mainly lost).
+
+There were a few more contributors from other parts of this project(which are all lost).
+
 Front-end, Higher level management: Kim Koung-Bin(김경빈), Abduolimov Alisherbek(@alisherfw)
-Structure Engineering is mainly from Kim Koung-Bin, smaller ideas were from Lee Yunjin and Abduolimov Alisherbek, Akhmad Kholmurodov(e.g: Device Driver Structures, TCP Flowchart at actual implementation, Integrated management)
+
+Structure Engineering is mainly from Kim Koung-Bin, s
+maller ideas were from Lee Yunjin and Abduolimov Alisherbek, Akhmad Kholmurodov(e.g: Device Driver Structures, TCP Flowchart at actual implementation, Integrated management)
+
 **Almost all of the sources are implemented by Lee Yunjin, but ideas are from whole laboratory.**
 
 *Here's a thing:*
@@ -69,13 +76,15 @@ Others are normal gpio chardev.
 
 ## config directory
 
-It is used for K8S Pod deployment
+It is used for K8S Pod deployment.
 
 ## car directory
 
 It includes device driver for a car and a control program.
-The control program controls the car while receiving commands transmitted at a long distance
-In tunneling device, there is a program catching a command from its tunnel while relaying the commands to remote car
+
+The control program controls the car while receiving commands transmitted at a long distance.
+In tunneling device, there is a program catching a command from its tunnel while relaying the commands to remote car.
+
 ### car/common directory
 Common headers
 ### car/controller
