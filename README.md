@@ -10,21 +10,33 @@ Structure Engineering is mainly from Kim Koung-Bin, smaller ideas were from Lee 
 **Almost all of the sources are implemented by Lee Yunjin, but ideas are from whole laboratory.**
 
 *Here's a thing:*
+
 - Main Structure: Kim Koung-bin, Jin Sung-geun 
+
 - TCP Flowchart: Lee Yunjin, Kim Koung-bin, Jin Sung-geun
+
 - k8s Deploy Structure: Jin Sung-geun
+
 - Detailed k8s Structure: Lee Yunjin
+
 - Detailed Device Driver Structure: Lee Yunjin
+
 - Internal Implementation: Lee Yunjin, Jin Sung-geun, Kim Koung-bin
+
 - Front-end Implementation: Kim Koung-bin, Abduolimov Alisherbek, Akhmad Kholmurodov
+
 - Detailed Software Integration: Lee Yunjin, Akhmad Kholmurodov, Abduolimov Alisherbek
 
 
-Basic network structure is:
-    - Physical Car sends device status 
-    - Virtual car gets information and runs simulation
-    - Virtual car gives simulated result into physical car
-    - Physical car executes those simulated results
+## Basic Network Structure
+- Physical Car sends device status 
+
+- Virtual car gets information and runs simulation
+
+- Virtual car gives simulated result into physical car
+
+- Physical car executes those simulated results
+
 
 Motor Driver implementation: IOCTL to I2C driver
 Tunneling device driver is doubly linked list
