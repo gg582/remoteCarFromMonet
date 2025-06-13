@@ -1,4 +1,4 @@
-# 1. Introduction
+# Introduction
 
 This provides an environment to control a car at long distance.
 This is an excerpt from Professor Jin Sung-geun 's laboratory.
