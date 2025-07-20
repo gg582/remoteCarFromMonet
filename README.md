@@ -46,7 +46,7 @@ maller ideas were from Lee Yunjin and Abduolimov Alisherbek, Akhmad Kholmurodov(
 
 
 Motor Driver implementation: IOCTL to I2C driver
-Tunneling device driver is doubly linked list
+Tunneling device driver is a doubly linked list
 Others are normal gpio chardevs.
 
 
