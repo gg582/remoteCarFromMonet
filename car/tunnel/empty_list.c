@@ -8,8 +8,10 @@ void empty_list ( list * lst )
         return;
     }
     while ( element != lst -> rear ) { // while list is not rear node
-        kfree ( element ) ;           // free the list
-        element = element -> next ;   // go to the next node
+        node * next = element -> next ; // remember next node before freeing
+        kfree ( element -> key ) ;    // keys are kmalloc'd by the driver
+        kfree ( element ) ;           // free the node
+        element = next ;              // go to the next node
     }
     lst -> front -> next = lst -> rear ;
     lst -> rear -> prev = lst -> front ;
@@ -17,6 +19,9 @@ void empty_list ( list * lst )
 }
 void free_list (list * lst)   // freeing the list
 {
+    if ( lst -> front == NULL ) {
+        return;
+    }
     empty_list ( lst ) ;     // first, clear the list
     kfree ( lst -> front ) ; // free the list -> front
     kfree ( lst -> rear ) ; // free the list -> rear

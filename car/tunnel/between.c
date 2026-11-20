@@ -6,9 +6,10 @@ int8_t between( list * lst, char * item, node * b, node * n)
 {
     node * element ;
     if ( ( element = ( node * ) kmalloc ( sizeof ( node ), GFP_KERNEL ) ) == NULL ) {
-        return 1 ;
+        return -1 ;
     }
     element->key = LST_ERR;
+    element->len = 0;
     if ( ( b != n -> prev ) ) { //you can't push your element when extra nodes are in between of two nodes.
         kfree( element ); //So, I will free allocated node...
         return -1;
