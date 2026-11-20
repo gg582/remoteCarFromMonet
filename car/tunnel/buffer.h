@@ -6,13 +6,15 @@
 #include <linux/cdev.h>
 #include <linux/errno.h>
 #include <linux/types.h>
-#include <asm/uaccess.h>
+#include <linux/uaccess.h>
+#include <linux/string.h>
 #include "buffer_io.h"
 #define TEMP_SIZE 128
 typedef long long ll;
 
 typedef struct node {
     char * key;
+    size_t len; /* number of valid bytes in key */
     struct node * prev;
     struct node * next;
 } node;

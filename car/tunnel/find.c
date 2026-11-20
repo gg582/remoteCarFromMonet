@@ -6,10 +6,7 @@ node * find ( list * lst, unsigned char * key )
     node * p; //we use this node as cursor
     p = lst -> front -> next ; //so, starting from first node
     while ( p != lst -> rear ) { //find it till the end.
-        if ( !memcmp( p, lst -> rear, sizeof(node) ) ) {
-            break;
-        }
-        if (!memcmp(p->key,key,sizeof(unsigned char)*PREFIX)) { //if same key is detected
+        if (!strncmp(p->key,(const char *)key,PREFIX)) { //if same key is detected
             break; //break the loop.
         }
         p = p -> next ; //go to the next node
@@ -18,19 +15,18 @@ node * find ( list * lst, unsigned char * key )
 }
 ll index_of (list *lst, node *nd)
 {
-    auto ll i;
+    ll i;
     node *p;
     i=0;
     p = lst -> front -> next;
     while( p != lst ->rear ) {
-        if(!memcmp(p,lst->rear,sizeof(node))) {
-            return -1;
-        } else if (!memcmp(p,nd,sizeof(node))) {
+        if (p == nd) {
             return i;
         }
         i++;
+        p = p -> next;
     }
-    return i;
+    return -1;
 }
 node * index_node ( list * lst, ll i )
 {
@@ -38,9 +34,12 @@ node * index_node ( list * lst, ll i )
     					   like an array with this */
     node * n;
     ll k ;
+    if ( i < 0 || i >= lst -> size ) { //out of range
+        return lst -> rear;
+    }
     if ( i > lst -> size / 2) { //if its location is close to rear,
         n = lst -> rear -> prev; //it starts finding from last node.
-        for ( k = 0 ; k < lst -> size - i + 1 ; k ++ ) {
+        for ( k = 0 ; k < lst -> size - i - 1 ; k ++ ) {
             if ( n == lst -> front ) { //find your node till the first data comes
                 return lst -> rear; /*but when there is no data, it returns rear node
 						      for integrated form of error report */
@@ -54,8 +53,8 @@ node * index_node ( list * lst, ll i )
             if ( n == lst -> rear ) { //find till the last node comes out!
                 break; //finally, last node is here. break this loop
             }
+            n = n -> next; //go to the next node
         }
-        n = n -> next; //go to the next node
     }
     return n; //and return
 }
